@@ -1,0 +1,87 @@
+# generated: 2026-06-20
+# last_updated: 2026-06-20 (stories 1.0 + 1.1a created)
+# project: Aperture
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: {project-root}/_bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-06-20
+last_updated: 2026-06-20
+project: Aperture
+project_key: NOKEY
+tracking_system: file-system
+story_location: "{project-root}/_bmad-output/implementation-artifacts"
+
+development_status:
+  # Epic 1: Foundation, Confidential Data Plane & Mode B Feasibility
+  epic-1: in-progress
+  1-0-ui-contract-signature-cell: ready-for-dev
+  1-1a-vendored-pinned-baseline-first-green-build: ready-for-dev
+  1-1b-move-package-build-off-chain-spike-harness-verify-seam: backlog
+  1-1c-on-chain-fixture-verify-seam: backlog
+  1-2a-spike-1-go-no-go: backlog
+  1-2b-spike-2-one-ptb-wrap-batch: backlog
+  1-3-create-organization: backlog
+  1-4-add-recipients-with-cap: backlog
+  1-5-register-recipient-accounts-designate-auditor: backlog
+  1-6-fund-treasury-via-single-aggregate-wrap: backlog
+  1-7-execute-batch-payment-run: backlog
+  1-8-holder-balance-view: backlog
+  1-9-holder-claim-withdraw: backlog
+  epic-1-retrospective: optional
+
+  # Epic 2: Auditor Console (Mode A)
+  epic-2: backlog
+  2-1-auditor-authentication-designated-scope: backlog
+  2-2-audit-trail-of-audit-infrastructure-viewer: backlog
+  2-3-recover-view-designated-account: backlog
+  2-4-per-run-report-export: backlog
+  2-5-privacy-posture-panel: backlog
+  epic-2-retrospective: optional
+
+  # Epic 3: Proof-of-Figure (Mode B) — GATED on SPIKE-1 (Story 1.2a)
+  epic-3: backlog
+  3-1-select-entries-disclose-value: backlog
+  3-2-generate-aggregate-proof: backlog
+  3-3-verify-proof-without-secret-key: backlog
+  3-4-single-amount-fallback: backlog
+  3-5-disclosure-receipt: backlog
+  epic-3-retrospective: optional
+
+  # Epic 4: Demo Narrative & Polish
+  epic-4: backlog
+  4-1-full-cross-role-switch-lens-polish: backlog
+  4-2-explorer-deep-links: backlog
+  4-3-global-state-accessibility-sweep: backlog
+  4-4-verifier-proof-request-demo-opening: backlog
+  4-5-one-command-demo-path-recorded-backup: backlog
+  epic-4-retrospective: optional
