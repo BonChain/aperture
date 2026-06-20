@@ -1,0 +1,4 @@
+[submodule "vendor/contra"]
+	path = vendor/contra
+	url = https://github.com/MystenLabs/confidential-transfers.git
+	branch = main
