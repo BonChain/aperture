@@ -45,7 +45,7 @@ development_status:
   # Epic 1: Foundation, Confidential Data Plane & Mode B Feasibility
   epic-1: in-progress
   1-0-ui-contract-signature-cell: ready-for-dev
-  1-1a-vendored-pinned-baseline-first-green-build: in-progress
+  1-1a-vendored-pinned-baseline-first-green-build: review
   1-1b-move-package-build-off-chain-spike-harness-verify-seam: backlog
   1-1c-on-chain-fixture-verify-seam: backlog
   1-2a-spike-1-go-no-go: backlog
