@@ -49,14 +49,7 @@ module aperture::aperture_tests {
     /// Round-trip: prove an ElGamal encryption, verify it.
     fun verify_elgamal_round_trip() {
         let s = build_test_statement();
-        let proof = verifier::prove_for_testing(
-            statement::dst(&s),
-            &sui::ristretto255::g_from_bytes(&statement::pk(&s)),
-            &sui::ristretto255::g_from_bytes(&statement::ciphertext(&s)),
-            &sui::ristretto255::g_from_bytes(&statement::decryption_handle(&s)),
-            TEST_AMOUNT,
-            TEST_BLINDING,
-        );
+        let proof = prove_for_statement(&s);
         assert!(verifier::verify(&s, &proof), 0);
     }
 
@@ -77,14 +70,7 @@ module aperture::aperture_tests {
     /// actually broken by an off-by-one-bit mistake.
     fun verify_elgamal_rejects_tamper() {
         let s = build_test_statement();
-        let proof = verifier::prove_for_testing(
-            statement::dst(&s),
-            &sui::ristretto255::g_from_bytes(&statement::pk(&s)),
-            &sui::ristretto255::g_from_bytes(&statement::ciphertext(&s)),
-            &sui::ristretto255::g_from_bytes(&statement::decryption_handle(&s)),
-            TEST_AMOUNT,
-            TEST_BLINDING,
-        );
+        let proof = prove_for_statement(&s);
         // Flip the low bit of z1's first byte. Stays in mod group order
         // because scalar_from_bytes clamps; breaks the relation.
         let z1_bytes = verifier::proof_z1(&proof);
@@ -120,6 +106,25 @@ module aperture::aperture_tests {
             *c1.bytes(),
             *d.bytes(),
             TEST_AMOUNT,
+        )
+    }
+
+    /// Prove a Statement built with the test triple's TEST_AMOUNT /
+    /// TEST_BLINDING. Story 1.1b code review (finding M8) flagged that
+    /// passing the constants again in each test body risks internal
+    /// drift (someone bumps TEST_BLINDING in `build_test_statement` but
+    /// not in `prove_for_testing`; the prove still verifies against
+    /// the OLD statement because Move's relation is internally
+    /// consistent). Centralizing here means a single source of truth
+    /// for the prove parameters.
+    fun prove_for_statement(s: &Statement): verifier::ElGamalProof {
+        verifier::prove_for_testing(
+            statement::dst(s),
+            &sui::ristretto255::g_from_bytes(&statement::pk(s)),
+            &sui::ristretto255::g_from_bytes(&statement::ciphertext(s)),
+            &sui::ristretto255::g_from_bytes(&statement::decryption_handle(s)),
+            TEST_AMOUNT,
+            TEST_BLINDING,
         )
     }
 }
