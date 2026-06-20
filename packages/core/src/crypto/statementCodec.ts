@@ -40,7 +40,10 @@ export function encodeUleb128(n: number): Uint8Array {
   return new Uint8Array(out);
 }
 
-/** Decode a ULEB128 length prefix; returns `[length, bytesConsumed]`. */
+/** Decode a ULEB128 length prefix; returns `[length, bytesConsumed]`.
+ *  Caps at `MAX_VECTOR_LENGTH` (2^32-1, BCS-sane) to prevent DoS via
+ *  attacker-controlled `vector<u8>` length prefixes. */
+const MAX_VECTOR_LENGTH = 0xffffffff; // 2^32 - 1; BCS-sane cap.
 function decodeUleb128(
   bytes: Uint8Array,
   offset: number,
@@ -57,8 +60,13 @@ function decodeUleb128(
     i += 1;
     if ((byte & 0x80) === 0) break;
     shift += 7;
-    if (shift > 35) {
-      throw new Error("ULEB128 decode: integer too large");
+    // 5 bytes × 7 bits = 35 bits, exactly covers 2^32. The 6th byte
+    // would push us past MAX_VECTOR_LENGTH — reject so callers don't
+    // silently allocate ~4 TB.
+    if (shift >= 35) {
+      throw new Error(
+        `ULEB128 decode: length exceeds ${MAX_VECTOR_LENGTH} (DoS guard)`,
+      );
     }
   }
   return [value, i - offset];
