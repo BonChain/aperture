@@ -9,10 +9,27 @@
 # vendor/contra/PINNED_VERSION so the adapterVersion test (which expects the
 # file at that path per the story spec) can read it. The file inside the
 # submodule is untracked by design (the submodule is read-only).
+#
+# Invoked by:
+#   - `pnpm postinstall` (root package.json) on every install → mandatory for fresh clones
+#   - `./scripts/preflight.sh` at the top of the toolchain check
+#   - `scripts/verify-pin.sh` to cross-check the 3 tracked locations
 set -eu
+set -o pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PIN_PATH="$REPO_ROOT/vendor/contra/PINNED_VERSION"
+VENDORED_CONTRA="$REPO_ROOT/vendor/contra"
+VENDORED_TS_SDK_PKG="$VENDORED_CONTRA/ts-sdk/package.json"
+
+# 0. Refuse to run if the submodule isn't initialised. Patching P22b: a
+#    `mkdir -p` here would silently create vendor/contra as a regular
+#    directory, masking the missing-submodule state.
+if [ ! -d "$VENDORED_CONTRA" ] || [ ! -e "$VENDORED_CONTRA/.git" ] && [ ! -f "$VENDORED_CONTRA/.git" ]; then
+  printf '\033[31m✗ regen-pin: vendor/contra submodule is not initialised.\033[0m\n' >&2
+  printf '  Run \`git submodule update --init --recursive\` first.\n' >&2
+  exit 1
+fi
 
 # 1. Extract the Move git sha from move/Move.toml (tracked source of truth).
 MOVE_SHA=$(grep -E '^\s*rev\s*=\s*"[0-9a-f]{40}"' "$REPO_ROOT/move/Move.toml" \
@@ -23,21 +40,53 @@ if [ -z "$MOVE_SHA" ]; then
   exit 1
 fi
 
-# 2. Extract the ts-sdk version from the vendored package.json. Fall back to
-#    "1.0.0" if the submodule hasn't been cloned yet (CI bootstrap).
-TS_SDK_VERSION="1.0.0"
-if [ -f "$REPO_ROOT/vendor/contra/ts-sdk/package.json" ]; then
-  TS_SDK_VERSION=$(grep -E '"version"\s*:\s*"[0-9.]+"' \
-    "$REPO_ROOT/vendor/contra/ts-sdk/package.json" \
+# 2. Extract the ts-sdk version from the vendored package.json. Patching P11:
+#    do NOT fall back to "1.0.0" if the submodule hasn't been cloned — the
+#    adapterVersion test would then assert against a fake version and pass
+#    green even when the pin is unverified. Fail loudly instead.
+if [ ! -f "$VENDORED_TS_SDK_PKG" ]; then
+  printf '\033[31m✗ regen-pin: vendored ts-sdk package.json missing at %s\033[0m\n' "$VENDORED_TS_SDK_PKG" >&2
+  printf '  Submodule is initialised but ts-sdk/ is absent. Did the clone complete?\n' >&2
+  exit 1
+fi
+
+# Patching P21: wrap JSON.parse in try/catch so a corrupted submodule clone
+# gives a useful error instead of an opaque SyntaxError.
+TS_SDK_VERSION=""
+if command -v node >/dev/null 2>&1; then
+  TS_SDK_VERSION=$(node -e '
+    const fs = require("node:fs");
+    try {
+      const pkg = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+      if (!pkg.version) { process.stderr.write("ts-sdk package.json has no version field\n"); process.exit(2); }
+      process.stdout.write(pkg.version);
+    } catch (e) {
+      process.stderr.write("failed to parse ts-sdk package.json: " + e.message + "\n");
+      process.exit(2);
+    }
+  ' "$VENDORED_TS_SDK_PKG" 2>&1) || {
+    printf '\033[31m✗ regen-pin: %s\033[0m\n' "$TS_SDK_VERSION" >&2
+    exit 1
+  }
+else
+  # Fallback path for systems without node (rare; preflight should have
+  # caught it). Patching P12: anchor to `^\s*"version"` so nested package
+  # metadata doesn't win the first-match race. Patching P22: accept
+  # pre-release/suffix versions like 1.0.0-rc.1.
+  TS_SDK_VERSION=$(grep -E '^\s*"version"\s*:\s*"[^"]+"' "$VENDORED_TS_SDK_PKG" \
     | head -1 | sed -E 's/.*"version"\s*:\s*"([^"]+)".*/\1/')
+  if [ -z "$TS_SDK_VERSION" ]; then
+    printf '\033[31m✗ regen-pin: could not extract ts-sdk version from %s\033[0m\n' "$VENDORED_TS_SDK_PKG" >&2
+    exit 1
+  fi
 fi
 
 # 3. Cross-check: the submodule HEAD should equal MOVE_SHA. If not, the pin
 #    is stale (the submodule has been updated but Move.toml hasn't). Warn,
 #    don't abort — let preflight be the gate.
 SUB_SHA=""
-if command -v git >/dev/null 2>&1 && [ -d "$REPO_ROOT/vendor/contra/.git" ]; then
-  SUB_SHA=$(git -C "$REPO_ROOT/vendor/contra" rev-parse HEAD 2>/dev/null || true)
+if command -v git >/dev/null 2>&1; then
+  SUB_SHA=$(git -C "$VENDORED_CONTRA" rev-parse HEAD 2>/dev/null || true)
 fi
 
 # 4. Write the canonical pin file inside the submodule (untracked, regenerated).

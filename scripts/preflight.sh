@@ -2,7 +2,13 @@
 # scripts/preflight.sh
 # Verify Aperture dev toolchain. Fails fast with an actionable message per missing tool.
 # Source: Story 1.1a AC1 (AR-2, NFR-10) — preflight must fail fast.
-set -u
+#
+# This script also regenerates vendor/contra/PINNED_VERSION before the toolchain
+# checks (per code-review P8). The same regen runs as `pnpm postinstall`, so on
+# a normal `pnpm install` flow the pin file is already in place — preflight just
+# guarantees it before the toolchain check.
+set -eu
+set -o pipefail
 
 PASS=0
 WARN=0
@@ -25,13 +31,10 @@ min_version() {
   }'
 }
 
-extract_version() {
-  # extract_version <output> <pattern>
-  echo "$1" | grep -Eo "$2" | head -1
-}
-
 printf "\n\033[1mAperture preflight\033[0m\n"
-printf "Checking required toolchain...\n\n"
+printf "Regenerating pin file from tracked sources...\n"
+./scripts/regen-pin.sh
+printf "\nChecking required toolchain...\n\n"
 
 # 1. rustc
 if have rustc; then

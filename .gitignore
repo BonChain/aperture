@@ -27,5 +27,3 @@ pnpm-debug.log*
 # Coverage
 coverage/
 .nyc_output/
-
-# WSL2 Windows-host path swap (don't commit host-specific paths)

@@ -1,4 +1,8 @@
 [submodule "vendor/contra"]
 	path = vendor/contra
 	url = https://github.com/MystenLabs/confidential-transfers.git
-	branch = main
+	# Pin by SHA only (per Story 1.1a review D1). Do NOT add `branch =` here —
+	# it would let `git submodule update --remote` move the submodule away from
+	# the pinned commit, silently breaking reproducibility. To re-pin, update
+	# the `rev =` line in `move/Move.toml` and run `pnpm postinstall` (which
+	# calls `scripts/regen-pin.sh` from the new SHA, then re-tags).

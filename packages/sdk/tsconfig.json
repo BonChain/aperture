@@ -5,5 +5,9 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["test/**/*", "src/**/*"]
+  // The src/ tree lands in Story 1.1b (full @aperture/sdk build). In 1.1a this
+  // package exists only to host the pinned-version assertion test, so we
+  // intentionally include only test/** to avoid TS18003 "no inputs were found"
+  // warnings once a real src/ is added.
+  "include": ["test/**/*"]
 }
