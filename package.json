@@ -7,8 +7,8 @@
   "packageManager": "pnpm@11.8.0",
   "scripts": {
     "preflight": "./scripts/preflight.sh",
-    "postinstall": "./scripts/regen-pin.sh",
-    "build:wasm": "pnpm --filter @aperture/wasm build:wasm",
+    "postinstall": "git submodule update --init --recursive && ./scripts/regen-pin.sh",
+    "build:wasm": "./scripts/build-wasm.sh",
     "build:crypto": "pnpm --filter @aperture/core build:crypto",
     "build:first-green": "pnpm build:wasm && pnpm build:crypto",
     "test": "pnpm --filter @aperture/core test && pnpm --filter @aperture/sdk test:adapter-version",

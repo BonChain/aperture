@@ -31,9 +31,13 @@ min_version() {
   }'
 }
 
+# P-LOW-1: derive REPO_ROOT from $0 so preflight works from any subdirectory,
+# not just the repo root. regen-pin.sh / verify-pin.sh already do this.
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
 printf "\n\033[1mAperture preflight\033[0m\n"
 printf "Regenerating pin file from tracked sources...\n"
-./scripts/regen-pin.sh
+"$REPO_ROOT/scripts/regen-pin.sh"
 printf "\nChecking required toolchain...\n\n"
 
 # 1. rustc
@@ -52,7 +56,10 @@ if have rustup; then
     die "wasm32-unknown-unknown target" "run \`rustup target add wasm32-unknown-unknown\`"
   fi
 else
-  warn "rustup" "rustup not found — skipping target check (rustup is bundled with the rustup install above)"
+  # P-LOW-4 (AC1 gap): if rustup is missing, we can't verify the wasm32 target.
+  # Previously this was a `warn`, letting preflight pass on a box that can't
+  # actually build wasm. Treat as a hard failure per AC1 "fails fast".
+  die "rustup" "rustup not found — install via \`curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y\` then \`source \$HOME/.cargo/env\`. Required to verify wasm32-unknown-unknown target per AC1."
 fi
 
 # 3. wasm-pack

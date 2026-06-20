@@ -20,7 +20,8 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 "$REPO_ROOT/scripts/regen-pin.sh" >/dev/null
 
 PIN_PATH="$REPO_ROOT/vendor/contra/PINNED_VERSION"
-SHA=$(grep -E '^Move git sha:\s*[0-9a-f]{40}' "$PIN_PATH" | sed -E 's/^Move git sha:\s*([0-9a-f]{40}).*/\1/')
+SHA=$(grep -E '^Move git sha:\s*[0-9a-fA-F]{40}' "$PIN_PATH" \
+  | sed -E 's/^Move git sha:\s*([0-9a-fA-F]{40}).*/\1/' | tr 'A-F' 'a-f')
 if [ -z "$SHA" ]; then
   printf '\033[31m✗ verify-pin: no SHA in %s\033[0m\n' "$PIN_PATH" >&2
   exit 1
