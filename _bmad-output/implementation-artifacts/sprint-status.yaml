@@ -1,5 +1,5 @@
 # generated: 2026-06-20
-# last_updated: 2026-06-20 (1.1a moved to review after D1+D2 review patches applied)
+# last_updated: 2026-06-20 (1.1b story file created; status backlog → ready-for-dev)
 # project: Aperture
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-06-20
-last_updated: 2026-06-20 (story 1.0 → done)
+last_updated: 2026-06-20 (1.1b implementation complete → review)
 project: Aperture
 project_key: NOKEY
 tracking_system: file-system
@@ -46,7 +46,7 @@ development_status:
   epic-1: in-progress
   1-0-ui-contract-signature-cell: ready-for-dev
   1-1a-vendored-pinned-baseline-first-green-build: done
-  1-1b-move-package-build-off-chain-spike-harness-verify-seam: backlog
+  1-1b-move-package-build-off-chain-spike-harness-verify-seam: review
   1-1c-on-chain-fixture-verify-seam: backlog
   1-2a-spike-1-go-no-go: backlog
   1-2b-spike-2-one-ptb-wrap-batch: backlog

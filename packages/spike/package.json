@@ -1,0 +1,22 @@
+{
+  "name": "@aperture/spike",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Aperture off-chain spike harness — Story 1.1b. Imports only @aperture/core (crypto) + @aperture/wasm; never apps/* or packages/utils.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@aperture/core": "workspace:*",
+    "@aperture/wasm": "workspace:*",
+    "@noble/curves": "^2.2.0",
+    "@noble/hashes": "^2.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "vitest": "^4.1.0"
+  }
+}
