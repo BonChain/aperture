@@ -1,5 +1,5 @@
 # generated: 2026-06-20
-# last_updated: 2026-06-20 (1.1a moved to in-progress by JJ)
+# last_updated: 2026-06-20 (1.1a moved to review after D1+D2 review patches applied)
 # project: Aperture
 # project_key: NOKEY
 # tracking_system: file-system
@@ -45,7 +45,7 @@ development_status:
   # Epic 1: Foundation, Confidential Data Plane & Mode B Feasibility
   epic-1: in-progress
   1-0-ui-contract-signature-cell: ready-for-dev
-  1-1a-vendored-pinned-baseline-first-green-build: review
+  1-1a-vendored-pinned-baseline-first-green-build: done
   1-1b-move-package-build-off-chain-spike-harness-verify-seam: backlog
   1-1c-on-chain-fixture-verify-seam: backlog
   1-2a-spike-1-go-no-go: backlog

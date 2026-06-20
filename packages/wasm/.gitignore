@@ -1,8 +1,9 @@
 # wasm-pack output
 pkg/
-# cargo
+# cargo build artifacts
 target/
-# Pin Cargo.lock to keep the wasm build deterministic.
-# (For a binary it would be gitignored; for a library we keep it tracked — but
-#  this stub is binary-equivalent so we ignore Cargo.lock to avoid noise.)
-Cargo.lock
+# Cargo.lock is INTENTIONALLY TRACKED for a library (cdylib+rlib) crate so
+# the wasm artifact is reproducible across `cargo update` cycles. Per Story
+# 1.1a review P9: this was previously gitignored, which combined with an
+# unpinned wasm-bindgen dep meant the emitted _bg.wasm hash was unstable.
+# Cargo.lock

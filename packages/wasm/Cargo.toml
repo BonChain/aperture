@@ -7,8 +7,12 @@ description = "Aperture wasm package — first-green stub. Real bulletproofs are
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+# Pinned to the exact wasm-bindgen version that produced the Story 1.1a green
+# build. wasm-bindgen 0.2.x has had multiple breaking ABI shifts; combined with
+# the tracked Cargo.lock, this keeps `wasm-pack build --release` deterministic
+# across machines (Story 1.1a review P9).
 [dependencies]
-wasm-bindgen = "0.2"
+wasm-bindgen = "=0.2.125"
 
 [profile.release]
 # Same flags as the vendored bulletproofs-wasm to keep `wasmUrl` paths stable.

@@ -27,6 +27,10 @@ Aperture change is a new commit on top.
 
 ## Re-pin policy
 When the upstream Contra commit changes, all three pin locations must be updated atomically:
-1. `vendor/contra` submodule HEAD (via `git submodule update --remote vendor/contra` + new commit)
+1. `vendor/contra` submodule HEAD (set explicitly via `git -C vendor/contra checkout <NEW_SHA>`; do **not** rely on `git submodule update --remote` — the `.gitmodules` deliberately omits `branch =` to disable that path, per code-review D1)
 2. `move/Move.toml` `rev = "..."` (and Move sources rebuilt via Story 1.1b/1.1c)
 3. `.npmrc` pin comment + the adapter test in `packages/sdk/adapterVersion.test.ts`
+
+The 4th location — `vendor/contra/PINNED_VERSION` — is regenerated on every `pnpm install`
+(via the `postinstall` script in the root `package.json`, per code-review D2). It is the only
+way a fresh clone gets a valid pin file before `pnpm test` runs.
