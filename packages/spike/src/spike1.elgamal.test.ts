@@ -80,6 +80,9 @@ function fiatShamir(chunks: Uint8Array[]): bigint {
   );
 }
 
+const RISTRETTO_N =
+  0x1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3edn;
+
 function readScalarLE(bytes: Uint8Array, off: number): bigint {
   let v = 0n;
   for (let i = 31; i >= 0; i--) v = (v << 8n) | BigInt(bytes[off + i] as number);
@@ -103,6 +106,12 @@ function verifyElGamal(
   const b = ristretto255.Point.fromHex(bytesToHex(proof.slice(32, 64)));
   const z1 = readScalarLE(proof, 64);
   const z2 = readScalarLE(proof, 96);
+  // Clamp z1, z2 to mod RISTRETTO_N — mirrors Move's `scalar_from_bytes`.
+  // Without reduction, a TS-built proof with z1 > N would be rejected here
+  // but accepted by Move (which clamps). This keeps the off-chain ↔
+  // on-chain seam contracts aligned.
+  const z1c = z1 % RISTRETTO_N;
+  const z2c = z2 % RISTRETTO_N;
   const challenge = fiatShamir([
     dst,
     G.toBytes(),
@@ -113,10 +122,12 @@ function verifyElGamal(
     a.toBytes(),
     b.toBytes(),
   ]);
-  const lhs1 = pk.multiply(z1);
-  const rhs1 = e2.multiply(challenge).add(a);
-  const lhs2 = e1.multiply(challenge).add(b);
-  const rhs2 = G.multiply(z1).add(H.multiply(z2));
+  // Clamp challenge to mod N too — same reason.
+  const challengeN = challenge % RISTRETTO_N;
+  const lhs1 = pk.multiply(z1c);
+  const rhs1 = e2.multiply(challengeN).add(a);
+  const lhs2 = e1.multiply(challengeN).add(b);
+  const rhs2 = G.multiply(z1c).add(H.multiply(z2c));
   return lhs1.equals(rhs1) && lhs2.equals(rhs2);
 }
 
