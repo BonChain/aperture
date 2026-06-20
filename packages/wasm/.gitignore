@@ -1,0 +1,8 @@
+# wasm-pack output
+pkg/
+# cargo
+target/
+# Pin Cargo.lock to keep the wasm build deterministic.
+# (For a binary it would be gitignored; for a library we keep it tracked — but
+#  this stub is binary-equivalent so we ignore Cargo.lock to avoid noise.)
+Cargo.lock

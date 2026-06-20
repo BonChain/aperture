@@ -1,6 +1,10 @@
+---
+baseline_commit: 5d86f04bd84f38ee568d23fd1e882ea05f2d28db
+---
+
 # Story 1.1a: Vendored Pinned Baseline & First-Green Build
 
-Status: ready-for-dev
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
