@@ -54,5 +54,29 @@ describe("crypto helpers (isomorphic, no node:*)", () => {
     expect(
       timingSafeEqual(new Uint8Array([1, 2, 3]), new Uint8Array([1, 2, 3, 4])),
     ).toBe(false);
+    expect(
+      timingSafeEqual(new Uint8Array([1, 2, 3, 4]), new Uint8Array([1, 2, 3])),
+    ).toBe(false);
+    expect(
+      timingSafeEqual(new Uint8Array([1, 2, 3]), new Uint8Array([])),
+    ).toBe(false);
+    expect(
+      timingSafeEqual(new Uint8Array([]), new Uint8Array([1, 2, 3])),
+    ).toBe(false);
+    expect(
+      timingSafeEqual(new Uint8Array([]), new Uint8Array([])),
+    ).toBe(true);
+  });
+
+  it("timingSafeEqual length-mismatch still returns false even when bytes overlap identically", () => {
+    // The whole point of the fix: a naive impl could `return false` early
+    // without comparing bytes, OR could compare the overlap and return true
+    // if all shared bytes match. Our impl must do neither.
+    expect(
+      timingSafeEqual(
+        new Uint8Array([1, 2, 3, 4, 5]),
+        new Uint8Array([1, 2, 3]),
+      ),
+    ).toBe(false);
   });
 });
