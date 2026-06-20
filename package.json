@@ -10,12 +10,19 @@
     "postinstall": "git submodule update --init --recursive && ./scripts/regen-pin.sh",
     "build:wasm": "./scripts/build-wasm.sh",
     "build:crypto": "pnpm --filter @aperture/core build:crypto",
-    "build:first-green": "pnpm build:wasm && pnpm build:crypto",
-    "test": "pnpm --filter @aperture/core test && pnpm --filter @aperture/sdk test:adapter-version",
+    "build:move": "bash -c 'command -v sui >/dev/null 2>&1 || { echo \"✗ sui CLI not in PATH — install from https://github.com/MystenLabs/sui/releases (or cargo install sui) and re-run\" >&2; exit 1; }; cd move && sui move build'",
+    "build:first-green": "pnpm build:wasm && pnpm build:crypto && pnpm build:move",
+    "test": "pnpm --filter @aperture/core test && pnpm --filter @aperture/spike test && pnpm --filter @aperture/sdk test:adapter-version && pnpm test:move",
     "test:adapter-version": "pnpm --filter @aperture/sdk test:adapter-version",
+    "test:move": "bash -c 'command -v sui >/dev/null 2>&1 || { echo \"✗ sui CLI not in PATH — install from https://github.com/MystenLabs/sui/releases (or cargo install sui) and re-run\" >&2; exit 1; }; cd move && sui move test'",
+    "test:spike": "pnpm --filter @aperture/spike test",
+    "format:move": "prettier-move -w 'move/sources/**/*.move' 'move/tests/**/*.move'",
+    "format:move:check": "prettier-move -c 'move/sources/**/*.move' 'move/tests/**/*.move'",
+    "capture:golden": "./scripts/capture-move-golden.sh",
     "verify:pin": "./scripts/verify-pin.sh"
   },
   "devDependencies": {
+    "tsx": "^4.22.4",
     "typescript": "^5.9.0",
     "vitest": "^4.1.0"
   }

@@ -61,3 +61,8 @@ coverage/
 # .gitignore, so we can't suppress it from here — this comment is the
 # warning. If a fresh clone shows "Untracked content" under vendor/contra,
 # that's the pin file and it is expected.
+
+# Story 1.1b additions — Move build artifacts (Task 1)
+move/build/
+
+# Spike package — fixtures are committed; nothing to ignore at the package level.

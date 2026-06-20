@@ -2,10 +2,12 @@
 name = "aperture"
 edition = "2024.beta"
 # Rev MUST equal the vendor/contra submodule HEAD (a0ec1e08996074b11ade2a1ede035cf5a108d291).
-# Verified by Story 1.1a AC2 / CI assert (future Story 1.1b).
-# Sources land in Story 1.1b (off-chain spike harness) and 1.1c (on-chain fixture).
+# Verified by Story 1.1a AC2 / CI assert + regen-pin.sh.
+# Sources land in Story 1.1b (statement.move + verifier.move + tests).
 rev = "a0ec1e08996074b11ade2a1ede035cf5a108d291"
 
 [dependencies]
-# Moved into the tree by Story 1.1b/1.1c:
-# AptosFramework = { local = "../vendor/contra/move" }
+contra = { local = "../vendor/contra/move" }
+
+[environments]
+devnet = "4fe43958"
