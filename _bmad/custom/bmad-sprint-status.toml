@@ -1,0 +1,16 @@
+# Team override for bmad-sprint-status — per-owner sprint filtering (Aperture two-person team).
+# Source of truth for ownership: _bmad-output/planning-artifacts/epics.md#Ownership & Work Split,
+# operationalized as the `story_ownership` map in
+# _bmad-output/implementation-artifacts/sprint-status.yaml.
+
+[workflow]
+
+persistent_facts = [
+  "Aperture is a two-person team: Tenny (PM + frontend + presentation) and JJ (backend + smart contract + crypto/build).",
+  "Story ownership lives in the `story_ownership` map of {project-root}/_bmad-output/implementation-artifacts/sprint-status.yaml; source of truth is epics.md#Ownership & Work Split.",
+  "When a teammate asks what their work is or what to do next, filter the sprint by the name they state in the session (state-name-per-session; there is no per-user config). Show stories where they are `lead`, PLUS stories where they appear in `collaborators` — surface collaborator slices flagged with the slice text.",
+]
+
+activation_steps_append = [
+  "Read the `story_ownership` map from {project-root}/_bmad-output/implementation-artifacts/sprint-status.yaml. If the user states their name (e.g. Tenny or JJ), scope the sprint summary to that person: list their `lead` stories first, then their `collaborator` slices flagged with the slice text. If no name is stated, show the full sprint but note that stating a name filters it.",
+]

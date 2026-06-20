@@ -85,3 +85,39 @@ development_status:
   4-4-verifier-proof-request-demo-opening: backlog
   4-5-one-command-demo-path-recorded-backup: backlog
   epic-4-retrospective: optional
+
+# OWNERSHIP & FILTERING CONVENTION (additive; does not affect development_status above)
+# ===================================================================================
+# Two-person team. When a teammate asks "what's my work", filter the sprint by the
+# name they state (state-name-per-session) and show stories where they are `lead`
+# PLUS stories where they appear in `collaborators` (collaborator slices are surfaced,
+# flagged with the slice text). Source of truth: epics.md#Ownership & Work Split.
+story_ownership:
+  1-0-ui-contract-signature-cell:                          { lead: Tenny, collaborators: [] }
+  1-1a-vendored-pinned-baseline-first-green-build:         { lead: JJ,    collaborators: [{ who: Tenny, slice: "prune kaisho web base" }] }
+  1-1b-move-package-build-off-chain-spike-harness-verify-seam: { lead: JJ, collaborators: [] }
+  1-1c-on-chain-fixture-verify-seam:                       { lead: JJ,    collaborators: [] }
+  1-2a-spike-1-go-no-go:                                   { lead: JJ,    collaborators: [] }
+  1-2b-spike-2-one-ptb-wrap-batch:                         { lead: JJ,    collaborators: [] }
+  1-3-create-organization:                                 { lead: JJ,    collaborators: [{ who: Tenny, slice: "Payer create form" }] }
+  1-4-add-recipients-with-cap:                             { lead: JJ,    collaborators: [{ who: Tenny, slice: "recipient editor + 8th-reject UX" }] }
+  1-5-register-recipient-accounts-designate-auditor:       { lead: JJ,    collaborators: [{ who: Tenny, slice: "registration UI + badges" }] }
+  1-6-fund-treasury-via-single-aggregate-wrap:             { lead: JJ,    collaborators: [{ who: Tenny, slice: "fund UI + crossing copy" }] }
+  1-7-execute-batch-payment-run:                           { lead: JJ,    collaborators: [{ who: Tenny, slice: "run UI + states" }] }
+  1-8-holder-balance-view:                                 { lead: Tenny, collaborators: [{ who: JJ,    slice: "getBalance adapter" }] }
+  1-9-holder-claim-withdraw:                               { lead: JJ,    collaborators: [{ who: Tenny, slice: "claim/withdraw UI + confirm" }] }
+  2-1-auditor-authentication-designated-scope:             { lead: JJ,    collaborators: [{ who: Tenny, slice: "scope list + lazy-sign UX" }] }
+  2-2-audit-trail-of-audit-infrastructure-viewer:          { lead: JJ,    collaborators: [{ who: Tenny, slice: "read-only viewer" }] }
+  2-3-recover-view-designated-account:                     { lead: JJ,    collaborators: [{ who: Tenny, slice: "account table + reveal" }] }
+  2-4-per-run-report-export:                               { lead: JJ,    collaborators: [{ who: Tenny, slice: "report table UI" }] }
+  2-5-privacy-posture-panel:                               { lead: Tenny, collaborators: [] }
+  3-1-select-entries-disclose-value:                       { lead: Tenny, collaborators: [{ who: JJ,    slice: "bound-and-reject in core/crypto" }] }
+  3-2-generate-aggregate-proof:                            { lead: JJ,    collaborators: [{ who: Tenny, slice: "proof-generator UI + timer" }] }
+  3-3-verify-proof-without-secret-key:                     { lead: JJ,    collaborators: [{ who: Tenny, slice: "verify UI + verdict" }] }
+  3-4-single-amount-fallback:                              { lead: JJ,    collaborators: [{ who: Tenny, slice: "reframed copy/UI" }] }
+  3-5-disclosure-receipt:                                  { lead: Tenny, collaborators: [{ who: JJ,    slice: "receipt schema/validation" }] }  # parked
+  4-1-full-cross-role-switch-lens-polish:                  { lead: Tenny, collaborators: [] }
+  4-2-explorer-deep-links:                                 { lead: Tenny, collaborators: [{ who: JJ,    slice: "NFR-1 explorer-payload check" }] }
+  4-3-global-state-accessibility-sweep:                    { lead: Tenny, collaborators: [] }
+  4-4-verifier-proof-request-demo-opening:                 { lead: Tenny, collaborators: [] }
+  4-5-one-command-demo-path-recorded-backup:               { lead: JJ,    collaborators: [{ who: Tenny, slice: "presentation + recorded backup" }] }
