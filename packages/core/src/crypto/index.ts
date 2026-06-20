@@ -8,6 +8,8 @@
 // compiles and the tsconfig strictness + lint boundary are enforced. Real
 // ElGamal/bulletproofs wrappers land after SPIKE-1.
 
+export { H_BYTES } from "./hBytes.js";
+
 /**
  * A 32-byte secret key, hex-encoded for transport. Pure type — no node:* deps.
  * Used as a placeholder until SPIKE-1 lands and we know which ElGamal curve
