@@ -1,0 +1,31 @@
+# Build artifacts
+node_modules/
+dist/
+build/
+target/
+pkg/
+*.wasm
+*.tgz
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# Env / secrets
+.env
+.env.local
+*.key
+*.pem
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Coverage
+coverage/
+.nyc_output/
+
+# WSL2 Windows-host path swap (don't commit host-specific paths)
