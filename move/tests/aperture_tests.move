@@ -61,15 +61,20 @@ module aperture::aperture_tests {
     }
 
     #[test]
-    /// Negative: a tampered proof must NOT verify. Tamper `proof.a` by flipping
-    /// the last byte of the underlying Ristretto point — `verify_elgamal` will
-    /// reject because the Fiat-Shamir relation `z1 * pk == c * e2 + a` no longer
-    /// holds.
+    /// Negative: a tampered proof must NOT verify. We flip the low bit of
+    /// `proof.z1` (a 32-byte LE scalar). `scalar_from_bytes` accepts any
+    /// 32-byte input and reduces mod the group order, so the tampered
+    /// scalar remains well-formed; what fails is the Fiat-Shamir
+    /// relation `z1 * pk == c * e2 + a` in `verify`.
     ///
-    /// (We tamper the proof rather than the ciphertext because flipping a byte
-    /// of a ciphertext may produce bytes that are not a valid Ristretto point,
-    /// which aborts `g_from_bytes` before reaching the verify logic — that abort
-    /// is a different failure mode, not what we want to test here.)
+    /// Note: we tamper a SCALAR byte, not a Ristretto POINT byte. Flipping
+    /// a sign bit of a Ristretto point (the obvious tamper) often
+    /// produces a non-canonical encoding that aborts at `g_from_bytes`
+    /// rather than failing the verify relation — a different (and
+    /// less interesting) failure mode for what this test is meant to
+    /// exercise. Story 1.1b code review flagged this; the scalar-byte
+    /// tamper is the cleanest way to assert the verify relation is
+    /// actually broken by an off-by-one-bit mistake.
     fun verify_elgamal_rejects_tamper() {
         let s = build_test_statement();
         let proof = verifier::prove_for_testing(
@@ -80,23 +85,12 @@ module aperture::aperture_tests {
             TEST_AMOUNT,
             TEST_BLINDING,
         );
-        // Tamper a Ristretto point by flipping its sign byte. Ristretto
-        // canonical encoding places the high bit of the last byte to indicate
-        // sign; flipping it produces a different valid point that, when used as
-        // `a` in the verify equation, breaks the relation.
-        let a_bytes = verifier::proof_a(&proof);
-        let last = vector::length(&a_bytes) - 1;
-        let mut tampered_a_bytes = a_bytes;
-        let original_byte = *vector::borrow(&a_bytes, last);
-        *vector::borrow_mut(&mut tampered_a_bytes, last) = original_byte ^ 0x80;
-        // Constructing a new proof re-validates points; some flipped sign bits
-        // produce invalid encodings that abort g_from_bytes. To test verify
-        // behavior strictly, also exercise a tamper that does NOT touch the
-        // point bytes — flip a scalar byte instead.
+        // Flip the low bit of z1's first byte. Stays in mod group order
+        // because scalar_from_bytes clamps; breaks the relation.
         let z1_bytes = verifier::proof_z1(&proof);
         let mut tampered_z1_bytes = z1_bytes;
         let z1_byte = *vector::borrow(&z1_bytes, 0);
-        *vector::borrow_mut(&mut tampered_z1_bytes, 0) = z1_byte ^ 0x01; // low bit flip on a scalar is always in mod group order
+        *vector::borrow_mut(&mut tampered_z1_bytes, 0) = z1_byte ^ 0x01;
         let tampered_proof = verifier::new_elgamal_proof(
             verifier::proof_a(&proof),
             verifier::proof_b(&proof),
@@ -104,11 +98,6 @@ module aperture::aperture_tests {
             verifier::proof_z2(&proof),
         );
         assert!(!verifier::verify(&s, &tampered_proof), 0);
-        // Use `tampered_a_bytes` so the compiler does not flag it as unused;
-        // re-running it through a sanity check confirms our point byte was
-        // actually non-canonical (and that we chose the right tamper target:
-        // scalar byte, not point byte).
-        let _ = tampered_a_bytes;
     }
 
     /// Build a Statement using real `pk = TEST_SK * g`, real ciphertext
