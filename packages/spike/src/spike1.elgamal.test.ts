@@ -15,78 +15,47 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { ristretto255 } from "@noble/curves/ed25519.js";
-import { blake2b } from "@noble/hashes/blake2.js";
+
+import { H_BYTES } from "@aperture/core/crypto";
+
+import {
+  G,
+  bytesToHex,
+  fiatShamirChallenge,
+  G_BYTES,
+  hexToBytes,
+  readScalarLE,
+  RISTRETTO_N,
+} from "./_bcs.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fxDir = resolve(here, "../test/fixtures");
-const proofValid = new Uint8Array(
-  readFileSync(resolve(fxDir, "proofValid.hex"), "utf8")
-    .trim()
-    .match(/.{1,2}/g)!
-    .map((b) => parseInt(b, 16)),
+const proofValid = hexToBytes(
+  readFileSync(resolve(fxDir, "proofValid.hex"), "utf8").trim(),
 );
-const proofTampered = new Uint8Array(
-  readFileSync(resolve(fxDir, "proofTampered.hex"), "utf8")
-    .trim()
-    .match(/.{1,2}/g)!
-    .map((b) => parseInt(b, 16)),
+const proofTampered = hexToBytes(
+  readFileSync(resolve(fxDir, "proofTampered.hex"), "utf8").trim(),
 );
-
-const H_BYTES = new Uint8Array([
-  0x34, 0xce, 0x14, 0x77, 0xc1, 0x45, 0x58, 0x17, 0x80, 0x89, 0x50, 0x0a,
-  0x39, 0xc8, 0x64, 0xe0, 0xf6, 0x07, 0xb3, 0xc1, 0xf4, 0x1a, 0xb3, 0x98,
-  0x40, 0x0e, 0x4a, 0x9d, 0xe6, 0xd2, 0xc4, 0x46,
-]);
 
 const TEST_AMOUNT = 42n;
 const TEST_BLINDING = 67890n;
 const TEST_SK = 12345n;
 
-function uleb128(n: number): Uint8Array {
-  const out: number[] = [];
-  let v = n;
-  do {
-    let b = v & 0x7f;
-    v >>>= 7;
-    if (v !== 0) b |= 0x80;
-    out.push(b);
-  } while (v !== 0);
-  return new Uint8Array(out);
-}
-
-function bcsEncodeVectorVectorU8(chunks: Uint8Array[]): Uint8Array {
-  const parts: Uint8Array[] = [];
-  parts.push(uleb128(chunks.length));
-  for (const c of chunks) {
-    parts.push(uleb128(c.length));
-    parts.push(c);
-  }
-  const total = parts.reduce((n, p) => n + p.length, 0);
-  const out = new Uint8Array(total);
-  let off = 0;
-  for (const p of parts) {
-    out.set(p, off);
-    off += p.length;
-  }
-  return out;
-}
-
-function fiatShamir(chunks: Uint8Array[]): bigint {
-  const preimage = bcsEncodeVectorVectorU8(chunks);
-  const hash = blake2b(preimage, { dkLen: 32 });
-  hash[31] = 0;
-  return ristretto255.Point.Fn.create(
-    hash.reduce((acc, b, i) => acc | (BigInt(b) << BigInt(i * 8)), 0n),
-  );
-}
-
-function readScalarLE(bytes: Uint8Array, off: number): bigint {
-  let v = 0n;
-  for (let i = 31; i >= 0; i--) v = (v << 8n) | BigInt(bytes[off + i] as number);
-  return v;
-}
-
-/** Isomorphic TS-side `verify_elgamal`. Mirrors `aperture::verifier::verify`. */
+/** Isomorphic TS-side `verify_elgamal`. Mirrors `aperture::verifier::verify`.
+ *
+ *  Contract divergence (intentional, documented):
+ *  - On malformed Ristretto encoding or scalar overflow, this returns
+ *    `false` (fail-closed). Move's `verify_elgamal` ABORTS via
+ *    `g_from_bytes` / `scalar_from_bytes` on the same inputs. Story 1.1b
+ *    code review flagged this; the divergence is acceptable because:
+ *      (a) The off-chain TS path is a sanity check for Story 3.3 — its
+ *          caller wraps it in a `try`/`catch` regardless.
+ *      (b) Both paths reach "verify fails" from the user's perspective.
+ *    When the real `ClientProofAdapter` lands (Story 3.2), it will call
+ *    the wasm prover which uses the same Move-style abort semantics —
+ *    at that point we may want to align this implementation to throw,
+ *    matching Move 1:1.
+ */
 function verifyElGamal(
   dst: Uint8Array,
   pkBytes: Uint8Array,
@@ -94,36 +63,49 @@ function verifyElGamal(
   decryptionHandleBytes: Uint8Array,
   proof: Uint8Array,
 ): boolean {
-  const G = ristretto255.Point.BASE;
-  const H = ristretto255.Point.fromHex(bytesToHex(H_BYTES));
-  const pk = ristretto255.Point.fromHex(bytesToHex(pkBytes));
-  const e1 = ristretto255.Point.fromHex(bytesToHex(ciphertextBytes));
-  const e2 = ristretto255.Point.fromHex(bytesToHex(decryptionHandleBytes));
-  const a = ristretto255.Point.fromHex(bytesToHex(proof.slice(0, 32)));
-  const b = ristretto255.Point.fromHex(bytesToHex(proof.slice(32, 64)));
-  const z1 = readScalarLE(proof, 64);
-  const z2 = readScalarLE(proof, 96);
-  const challenge = fiatShamir([
+  let pk: any, e1: any, e2: any, a: any, b: any;
+  try {
+    pk = ristretto255.Point.fromHex(bytesToHex(pkBytes));
+    e1 = ristretto255.Point.fromHex(bytesToHex(ciphertextBytes));
+    e2 = ristretto255.Point.fromHex(bytesToHex(decryptionHandleBytes));
+    a = ristretto255.Point.fromHex(bytesToHex(proof.slice(0, 32)));
+    b = ristretto255.Point.fromHex(bytesToHex(proof.slice(32, 64)));
+  } catch {
+    // Malformed Ristretto encoding (e.g., tampered byte 31 sign bit) → false.
+    return false;
+  }
+  // z1/z2 reduced mod N — mirrors Move's `scalar_from_bytes` clamping.
+  // Without reduction, a TS-built proof with z1 > N would be rejected here
+  // but accepted by Move, breaking the seam. See code-review #M6.
+  const rawZ1 = readScalarLE(proof, 64);
+  const rawZ2 = readScalarLE(proof, 96);
+  const z1 = rawZ1 % RISTRETTO_N;
+  const z2 = rawZ2 % RISTRETTO_N;
+  const challengeBytes = fiatShamirChallenge([
     dst,
-    G.toBytes(),
-    H.toBytes(),
+    G_BYTES,
+    H_BYTES,
     pk.toBytes(),
     e1.toBytes(),
     e2.toBytes(),
     a.toBytes(),
     b.toBytes(),
   ]);
-  const lhs1 = pk.multiply(z1);
-  const rhs1 = e2.multiply(challenge).add(a);
-  const lhs2 = e1.multiply(challenge).add(b);
-  const rhs2 = G.multiply(z1).add(H.multiply(z2));
-  return lhs1.equals(rhs1) && lhs2.equals(rhs2);
-}
-
-function bytesToHex(bytes: Uint8Array): string {
-  let out = "";
-  for (const b of bytes) out += b.toString(16).padStart(2, "0");
-  return out;
+  // Clamp challenge to mod N, matching Move's `scalar_from_bytes`.
+  let challenge = 0n;
+  for (let i = challengeBytes.length - 1; i >= 0; i--) {
+    challenge = (challenge << 8n) | BigInt(challengeBytes[i] as number);
+  }
+  challenge = challenge % RISTRETTO_N;
+  try {
+    const lhs1 = pk.multiply(z1);
+    const rhs1 = e2.multiply(challenge).add(a);
+    const lhs2 = e1.multiply(challenge).add(b);
+    const rhs2 = G().multiply(z1).add(ristretto255.Point.fromHex(bytesToHex(H_BYTES)).multiply(z2));
+    return lhs1.equals(rhs1) && lhs2.equals(rhs2);
+  } catch {
+    return false;
+  }
 }
 
 function buildCanonicalStatement(): {
@@ -132,10 +114,11 @@ function buildCanonicalStatement(): {
   ciphertext: Uint8Array;
   decryptionHandle: Uint8Array;
 } {
-  const G = ristretto255.Point.BASE;
   const H = ristretto255.Point.fromHex(bytesToHex(H_BYTES));
-  const pk = G.multiply(TEST_SK);
-  const c1 = G.multiply(TEST_BLINDING).add(H.multiply(TEST_AMOUNT));
+  const pk = G().multiply(TEST_SK);
+  const c1 = G()
+    .multiply(TEST_BLINDING)
+    .add(H.multiply(TEST_AMOUNT));
   const dh = pk.multiply(TEST_BLINDING);
   return {
     dst: new Uint8Array(0),
@@ -187,11 +170,19 @@ describe("spike1.elgamal (off-chain round-trip + tamper + golden match)", () => 
     expect(proofValid[64] ^ proofTampered[64]).toBe(0x01);
   });
 
+  it("Ristretto BASE point byte-equivalent to Move's g_generator()", () => {
+    // Move's `sui::ristretto255::g_generator()` returns the canonical
+    // Ristretto base point G. The byte representation is fixed by the
+    // Ristretto255 spec — assert it once so a future noble version that
+    // changes BASE encoding (extremely unlikely but possible) fails here
+    // before silently breaking every generated fixture.
+    expect(bytesToHex(G().toBytes())).toBe(bytesToHex(G_BYTES));
+  });
+
   it("spike import discipline — vitest config forbids apps/*", async () => {
     // The vitest config aliases apps/api and apps/web to stubs that throw
     // on import. Asserting the aliases are set means a future change that
-    // widens the spike layer would fail this assertion (in spirit — the
-    // assertion is on the config object itself).
+    // widens the spike layer would fail this assertion in spirit.
     const cfg = (await import("../vitest.config.js")).default;
     const alias = (cfg.resolve?.alias ?? {}) as Record<string, string>;
     expect(alias["apps/api"] ?? "").toContain("FORBIDDEN");
