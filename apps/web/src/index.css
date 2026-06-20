@@ -1,0 +1,49 @@
+@import './theme/tokens.css';
+@import './theme/typography.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Aperture base. Deep ink canvas, restrained chrome. No gradients, glow, neon,
+ * or ambient animation — those kaisho-base flourishes are intentionally pruned
+ * (DESIGN.md #Elevation & Depth, #Do's and Don'ts). Hierarchy is tonal only.
+ */
+@layer base {
+	html,
+	body {
+		background: var(--surface-base);
+		color: var(--ink-primary);
+		font-family: var(--font-ui);
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
+	/* Trust-blue focus ring, visible at AA against surface-base. */
+	:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+}
+
+/* Sober loading affordance — a tonal opacity pulse, no gradient/glow shimmer. */
+.aperture-skeleton {
+	background: var(--surface-raised);
+	border-radius: var(--radius-sm);
+	animation: aperture-pulse 1.6s ease-in-out infinite;
+}
+@keyframes aperture-pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.55;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.aperture-skeleton {
+		animation: none;
+	}
+}

@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-06-20
-last_updated: 2026-06-20
+last_updated: 2026-06-20 (story 1.0 → done)
 project: Aperture
 project_key: NOKEY
 tracking_system: file-system
@@ -44,7 +44,7 @@ story_location: "{project-root}/_bmad-output/implementation-artifacts"
 development_status:
   # Epic 1: Foundation, Confidential Data Plane & Mode B Feasibility
   epic-1: in-progress
-  1-0-ui-contract-signature-cell: ready-for-dev
+  1-0-ui-contract-signature-cell: done
   1-1a-vendored-pinned-baseline-first-green-build: ready-for-dev
   1-1b-move-package-build-off-chain-spike-harness-verify-seam: backlog
   1-1c-on-chain-fixture-verify-seam: backlog

@@ -1,0 +1,79 @@
+/*
+ * Aperture design tokens — the single source of visual truth.
+ * Dark is the DEFAULT scheme; base tokens hold the dark values (DESIGN.md).
+ * Values copied verbatim from DESIGN.md frontmatter. Story 1.0 ships dark-only;
+ * a light ramp is intentionally deferred (scheme = both was NOT chosen).
+ *
+ * Components MUST read from these variables (or the typed map in tokens.ts) and
+ * never inline a hex literal. Aperture tokens win over any inherited kaisho value.
+ */
+:root {
+	/* Surfaces — tonal layering carries hierarchy (no shadows for rank). */
+	--surface-base: #0b0f1a;
+	--surface-raised: #131926;
+	--surface-overlay: #1b2433;
+	--surface-sunken: #070a12;
+
+	/* Ink — text ramp. */
+	--ink-primary: #e6eaf2;
+	--ink-secondary: #9aa4b8;
+	--ink-disabled: #5a6478;
+	--ink-inverse: #0b0f1a;
+
+	/* Borders — lowest-contrast hairlines for dense tables. */
+	--border-hairline: #1e2738;
+	--border-strong: #2c3850;
+
+	/* Primary — trust-blue, role-independent system action color. */
+	--primary: #3b82f6;
+	--primary-hover: #2563eb;
+	--primary-foreground: #ffffff;
+	--ring: #3b82f6;
+
+	/* Semantic state — only ever real verdicts, never decoration. */
+	--verified: #34d399;
+	--verified-foreground: #04231a;
+	--failed: #fb7185;
+	--failed-foreground: #2a0710;
+	--notice: #94a3b8;
+
+	/* Trust boundary — Aperture's signature pair. */
+	--cipher-masked: #5a6478;
+	--cipher-reveal: #22d3ee;
+
+	/* Role accents — the role-switcher re-lenses the whole app. */
+	--role-payer: #f59e0b;
+	--role-payer-foreground: #1a1208;
+	--role-payer-muted: #2a2110;
+	--role-holder: #06b6d4;
+	--role-holder-foreground: #04222a;
+	--role-holder-muted: #0a2129;
+	--role-auditor: #8b5cf6;
+	--role-auditor-foreground: #14082a;
+	--role-auditor-muted: #1c1430;
+
+	/* Spacing — 4-based scale + named tokens. */
+	--space-1: 4px;
+	--space-2: 8px;
+	--space-3: 12px;
+	--space-4: 16px;
+	--space-5: 20px;
+	--space-6: 24px;
+	--space-8: 32px;
+	--space-10: 40px;
+	--space-12: 48px;
+	--space-16: 64px;
+	--gutter: 24px;
+	--page-margin: 32px;
+	--row-y: 10px;
+
+	/* Radius — tight, instrument-like corners. */
+	--radius-sm: 4px;
+	--radius-md: 6px;
+	--radius-lg: 8px;
+	--radius-full: 9999px;
+
+	/* Type families. */
+	--font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+	--font-data: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
+}

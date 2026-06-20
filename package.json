@@ -1,0 +1,14 @@
+{
+	"name": "aperture",
+	"private": true,
+	"version": "0.0.0",
+	"description": "Aperture — disclosure layer for confidential payments on Sui (monorepo root)",
+	"type": "module",
+	"packageManager": "pnpm@11.8.0",
+	"scripts": {
+		"dev": "pnpm --filter web dev",
+		"build": "pnpm --filter web build",
+		"test": "pnpm --filter web test",
+		"lint": "pnpm --filter web lint"
+	}
+}

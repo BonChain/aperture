@@ -1,0 +1,52 @@
+/*
+ * Typography scale (DESIGN.md). Inter for all UI; IBM Plex Mono with tabular
+ * figures for ALL data (amounts, addresses, hashes, ciphertext, timestamps) so
+ * columns align down an audit table. Class names mirror tokens.ts `typeClass`.
+ */
+.type-display {
+	font-family: var(--font-ui);
+	font-size: 28px;
+	font-weight: 600;
+	line-height: 1.2;
+	letter-spacing: -0.01em;
+}
+.type-heading {
+	font-family: var(--font-ui);
+	font-size: 18px;
+	font-weight: 600;
+	line-height: 1.3;
+}
+.type-body {
+	font-family: var(--font-ui);
+	font-size: 14px;
+	font-weight: 400;
+	line-height: 1.5;
+}
+.type-label {
+	font-family: var(--font-ui);
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 1.4;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+.type-caption {
+	font-family: var(--font-ui);
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 1.4;
+}
+.type-data {
+	font-family: var(--font-data);
+	font-size: 13px;
+	font-weight: 400;
+	line-height: 1.45;
+	font-variant-numeric: tabular-nums;
+}
+.type-data-lg {
+	font-family: var(--font-data);
+	font-size: 22px;
+	font-weight: 500;
+	line-height: 1.2;
+	font-variant-numeric: tabular-nums;
+}
