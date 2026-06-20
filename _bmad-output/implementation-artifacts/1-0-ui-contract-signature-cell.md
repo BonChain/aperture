@@ -1,6 +1,9 @@
+---
+baseline_commit: f5858d5cf1e7f31cfa9c2786d9b553044303b037
+---
 # Story 1.0: UI Contract & Signature Cell *(fixture-only)*
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -40,39 +43,39 @@ so that all three lenses share one visual identity and the signature masked↔re
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Token layer: CSS variables + typed token map (AC: 1)**
-  - [ ] Author the full token set as named CSS custom properties on the dark-default `:root`, sourced verbatim from `DESIGN.md` frontmatter (see Dev Notes "Token Reference"). Include surfaces, ink ramp, borders, primary/ring, semantic (`verified`/`failed`/`notice`), the trust pair (`cipher-masked`/`cipher-reveal`), and the three role accents each with `-foreground` + `-muted`.
-  - [ ] Create a **typed token map** (TS) mirroring the variables so components reference tokens by name, never raw values. Infer/keep types strict.
-  - [ ] Implement the typography scale (`display`/`heading`/`body`/`label`/`caption`/`data`/`data-lg`) — Inter for UI, **IBM Plex Mono with tabular figures** for all `data`/`data-lg`. Load both font families.
-  - [ ] Implement the spacing scale (4-based + named `gutter`/`page-margin`/`row-y`), radius tokens (`sm/md/lg/full`), and **tonal elevation** (surface ramp carries rank; true shadows only on floating dialogs/popovers with a `border-strong` edge).
-  - [ ] Confirm Aperture tokens override kaisho where they conflict.
-- [ ] **Task 2 — Atomic component kit, token-driven (AC: 2)**
-  - [ ] `RoleBanner` — full-width strip; active role `-muted` wash + accent left-border; states the lens label (e.g. "Auditor lens — designated read only"). [DR4]
-  - [ ] `ButtonPrimary` (trust-blue, system actions) + `ButtonRole` (active-role accent, in-lens hero CTA); secondary/ghost inherit neutral `border-strong`/`ink-secondary`. **No pill buttons.** [DR6]
-  - [ ] `StatusBadge` — `badge-verified` (emerald) / `badge-failed` (rose), `rounded-full`, text + dot, one verdict per badge. [DR7]
-  - [ ] `NoticeDisclaimer` — bordered `surface-overlay`, neutral `notice` slate text, **info glyph (never a warning triangle, never red)**. [DR8]
-- [ ] **Task 3 — `<CipherCell>` + identity invariant (AC: 3, 4, 8)**
-  - [ ] Build the `<CipherCell>` state machine with states **masked / revealing / revealed / error** (epics names all four).
-  - [ ] Masked = `••••••••` fixed-width in `cipher-masked` mono; revealed = real figure in `ink-primary` mono with the `cipher-reveal` aqua left-bar / unlock marker. Guarantee **no column reflow** on reveal (reserve width).
-  - [ ] Accept a **stable `cipherId`/anchor prop** so the same ciphertext masked in one lens and revealed in another is provably the same cell.
-  - [ ] **Specify the masked→revealed transition ONCE here** (duration / easing / swap-vs-decrypt-in-place) and document it inline as the canonical source for Stories 2.3 + 4.1. Reveal is an **authorization state, never animated as decoration / never a hover trick**.
-  - [ ] A11y: convey sealed vs revealed by **glyph/marker in addition to color** (masked `••••` glyph; revealed unlock marker + figure).
-- [ ] **Task 4 — Stub-framed components (AC: 5)**
-  - [ ] `DataTable` frame — `surface-sunken` body, uppercase `ink-secondary` `label` headers, `border-hairline` dividers, dense `row-y` padding, monospace `data` cell slots, sticky-header slot. Frame/rhythm only; no data binding. [DR9]
-  - [ ] `AuditLogRow` frame — append-only read-only row with `chain-marker` glyph slot; **no edit/delete affordance renders**. Frame only. [DR10]
-  - [ ] `DisclosureReceiptCard` frame — slots for holder pubkey, disclosed `X` (`data-lg`), included-count slot, truncated proof-blob well (`surface-sunken`), result badge slot. Frame only. [DR11]
-- [ ] **Task 5 — Role-switcher shell + Mode B front door + state primitives (AC: 6, 7)**
-  - [ ] `RoleSwitcher` shell in a persistent left-rail header with three lens slots (Payer/Holder/Auditor) as stubs; **app boots on the Mode B Holder front door**, not a wallet wall.
-  - [ ] Key-dependent action stubs render **disabled with "Sign to unlock →"** (no real signing in this story).
-  - [ ] Single source for `SkeletonLoader`, `ErrorCard`, `EmptyState` shells.
-- [ ] **Task 6 — Fixture harness + enforcement (AC: 1, 2, 9)**
-  - [ ] Render every component against **fixtures** (no real data, no network, no crypto).
-  - [ ] Add the lint zone that bans `node:*` in `apps/web` and asserts **no `@mysten/*` / `core/crypto` import from a lens/component**. [AR-15]
-  - [ ] Add a check/lint that **no hex color literals** appear in components (tokens only). [AC-1]
-- [ ] **Task 7 — Verify**
-  - [ ] Component tests against fixtures for the token-driven render of each atom + `<CipherCell>` masked/revealed/no-reflow + identity-anchor continuity.
-  - [ ] Confirm trust boundary distinguishable without color (glyph/marker present in DOM).
-  - [ ] Confirm the fixture-only / no-crypto-import lint zone fails on a deliberate violation.
+- [x] **Task 1 — Token layer: CSS variables + typed token map (AC: 1)**
+  - [x] Author the full token set as named CSS custom properties on the dark-default `:root`, sourced verbatim from `DESIGN.md` frontmatter (see Dev Notes "Token Reference"). Include surfaces, ink ramp, borders, primary/ring, semantic (`verified`/`failed`/`notice`), the trust pair (`cipher-masked`/`cipher-reveal`), and the three role accents each with `-foreground` + `-muted`.
+  - [x] Create a **typed token map** (TS) mirroring the variables so components reference tokens by name, never raw values. Infer/keep types strict.
+  - [x] Implement the typography scale (`display`/`heading`/`body`/`label`/`caption`/`data`/`data-lg`) — Inter for UI, **IBM Plex Mono with tabular figures** for all `data`/`data-lg`. Load both font families.
+  - [x] Implement the spacing scale (4-based + named `gutter`/`page-margin`/`row-y`), radius tokens (`sm/md/lg/full`), and **tonal elevation** (surface ramp carries rank; true shadows only on floating dialogs/popovers with a `border-strong` edge).
+  - [x] Confirm Aperture tokens override kaisho where they conflict.
+- [x] **Task 2 — Atomic component kit, token-driven (AC: 2)**
+  - [x] `RoleBanner` — full-width strip; active role `-muted` wash + accent left-border; states the lens label (e.g. "Auditor lens — designated read only"). [DR4]
+  - [x] `ButtonPrimary` (trust-blue, system actions) + `ButtonRole` (active-role accent, in-lens hero CTA); secondary/ghost inherit neutral `border-strong`/`ink-secondary`. **No pill buttons.** [DR6]
+  - [x] `StatusBadge` — `badge-verified` (emerald) / `badge-failed` (rose), `rounded-full`, text + dot, one verdict per badge. [DR7]
+  - [x] `NoticeDisclaimer` — bordered `surface-overlay`, neutral `notice` slate text, **info glyph (never a warning triangle, never red)**. [DR8]
+- [x] **Task 3 — `<CipherCell>` + identity invariant (AC: 3, 4, 8)**
+  - [x] Build the `<CipherCell>` state machine with states **masked / revealing / revealed / error** (epics names all four).
+  - [x] Masked = `••••••••` fixed-width in `cipher-masked` mono; revealed = real figure in `ink-primary` mono with the `cipher-reveal` aqua left-bar / unlock marker. Guarantee **no column reflow** on reveal (reserve width).
+  - [x] Accept a **stable `cipherId`/anchor prop** so the same ciphertext masked in one lens and revealed in another is provably the same cell.
+  - [x] **Specify the masked→revealed transition ONCE here** (duration / easing / swap-vs-decrypt-in-place) and document it inline as the canonical source for Stories 2.3 + 4.1. Reveal is an **authorization state, never animated as decoration / never a hover trick**.
+  - [x] A11y: convey sealed vs revealed by **glyph/marker in addition to color** (masked `••••` glyph; revealed unlock marker + figure).
+- [x] **Task 4 — Stub-framed components (AC: 5)**
+  - [x] `DataTable` frame — `surface-sunken` body, uppercase `ink-secondary` `label` headers, `border-hairline` dividers, dense `row-y` padding, monospace `data` cell slots, sticky-header slot. Frame/rhythm only; no data binding. [DR9]
+  - [x] `AuditLogRow` frame — append-only read-only row with `chain-marker` glyph slot; **no edit/delete affordance renders**. Frame only. [DR10]
+  - [x] `DisclosureReceiptCard` frame — slots for holder pubkey, disclosed `X` (`data-lg`), included-count slot, truncated proof-blob well (`surface-sunken`), result badge slot. Frame only. [DR11]
+- [x] **Task 5 — Role-switcher shell + Mode B front door + state primitives (AC: 6, 7)**
+  - [x] `RoleSwitcher` shell in a persistent left-rail header with three lens slots (Payer/Holder/Auditor) as stubs; **app boots on the Mode B Holder front door**, not a wallet wall.
+  - [x] Key-dependent action stubs render **disabled with "Sign to unlock →"** (no real signing in this story).
+  - [x] Single source for `SkeletonLoader`, `ErrorCard`, `EmptyState` shells.
+- [x] **Task 6 — Fixture harness + enforcement (AC: 1, 2, 9)**
+  - [x] Render every component against **fixtures** (no real data, no network, no crypto).
+  - [x] Add the lint zone that bans `node:*` in `apps/web` and asserts **no `@mysten/*` / `core/crypto` import from a lens/component**. [AR-15]
+  - [x] Add a check/lint that **no hex color literals** appear in components (tokens only). [AC-1]
+- [x] **Task 7 — Verify**
+  - [x] Component tests against fixtures for the token-driven render of each atom + `<CipherCell>` masked/revealed/no-reflow + identity-anchor continuity.
+  - [x] Confirm trust boundary distinguishable without color (glyph/marker present in DOM).
+  - [x] Confirm the fixture-only / no-crypto-import lint zone fails on a deliberate violation.
 
 ## Dev Notes
 
@@ -149,17 +152,118 @@ Per the architecture tree, frontend lives under `apps/web`: [Source: architectur
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+claude-opus-4-8 (1M context) — BMad dev-story workflow
 
 ### Debug Log References
 
+- `pnpm install` initially ignored native build scripts (`@swc/core`, `esbuild`); resolved via `allowBuilds`/`onlyBuiltDependencies` in `pnpm-workspace.yaml`.
+- `tsc` build failed on a duplicate Vite (vitest 2.1.9 pulled vite@5 whose plugin types clash with vite@6 react-swc). Resolved with a workspace `overrides: { vite: 6.4.3 }` (pnpm v11 moved overrides out of package.json).
+- PostCSS `@import must precede` — moved `@import './theme/*.css'` above the `@tailwind` directives in `index.css` so the token vars actually land in the bundle (verified `--surface-base` present in built CSS).
+
 ### Completion Notes List
 
-- Ultimate context engine analysis completed — comprehensive developer guide created.
+- **Scaffold (predecessor) done as the opening move of 1.0** — resolved blocking Open Question #1: created the pnpm workspace + copy-then-pruned `kaisho` (`~/confidential-transfers/apps/kaisho`) into `apps/web`. Pruned `@mysten/*`, `ts-sdk`, `contra-utils`, `@mysten/dapp-kit`, `@radix-ui/themes`, `react-router-dom`, and all kaisho neon/gradient/glow/shimmer CSS (banned by DESIGN.md). **Kept** the inherited plumbing the Dev Notes mandate: React Query (state lib), and `vite.config.ts` `worker.format:'es'` + `build.target es2022` + `fs.allow` + wasm `optimizeDeps` (needed by later stories' dlog worker).
+- **Open Question #2 → IBM Plex Mono** (confirmed by Tenny); wired for all `data`/`data-lg` with `tabular-nums`.
+- **Open Question #3 → dark-only** (confirmed by Tenny); base tokens hold dark values, no light ramp.
+- **Token contract:** `theme/tokens.css` (CSS vars, dark values verbatim from DESIGN.md) + `theme/tokens.ts` (typed map, every value a `var(--…)` ref) + `theme/typography.css`. Tailwind theme is re-wired to the Aperture vars so utilities resolve to tokens, not kaisho hex → "Aperture overrides kaisho on conflict" (AC-1).
+- **CipherCell identity invariant:** `cipherId` anchor prop + the single canonical `CIPHER_REVEAL_TRANSITION` constant (instantaneous swap, no animation, no hover) authored once here for Stories 2.3 / 4.1 to consume (AC-4).
+- **Lint zone** (`scripts/guardrails.mjs`, run via `pnpm lint`): bans `node:*`, `@mysten/*`, `core/crypto` imports and hex literals in components (theme layer exempt). Proven to fail on deliberate violations in `src/shared/guardrails.test.ts` (AC-9, Task 7).
+- **A11y (AC-8):** sealed vs revealed distinguishable by glyph (`••••` dots vs unlock marker), badge carries a text-redundant dot, status verdicts are text+icon.
+- **Verification:** `pnpm --filter web test` → 33 tests pass (6 files); `pnpm --filter web lint` → clean (18 files); `pnpm --filter web build` (`tsc && vite build`) → green.
+- **Process note:** tests were authored alongside (not strictly red-first) each component given the scaffolding nature of this story; every AC nonetheless has a passing test (Step-8 gate satisfied).
+- **Pre-existing (out of scope, not touched):** the full architecture tree (`packages/core`, `move/`, `apps/api`, `vendor/contra` submodule) is intentionally NOT scaffolded — Story 1.0 is `apps/web` fixture-only; those land with 1.1a+.
 
 ### File List
 
+**Repo root (scaffold):**
+- `pnpm-workspace.yaml` (new)
+- `package.json` (new)
+- `.nvmrc` (new)
+- `.gitignore` (new)
+
+**apps/web (new — config):**
+- `apps/web/package.json`
+- `apps/web/vite.config.ts`
+- `apps/web/tsconfig.json`
+- `apps/web/postcss.config.js`
+- `apps/web/tailwind.config.ts`
+- `apps/web/prettier.config.js`
+- `apps/web/index.html`
+- `apps/web/scripts/guardrails.mjs`
+
+**apps/web/src (new — token layer + app):**
+- `apps/web/src/theme/tokens.css`
+- `apps/web/src/theme/tokens.ts`
+- `apps/web/src/theme/typography.css`
+- `apps/web/src/theme/tokens.test.ts`
+- `apps/web/src/index.css`
+- `apps/web/src/main.tsx`
+- `apps/web/src/App.tsx`
+- `apps/web/src/test/setup.ts`
+- `apps/web/src/shared/fixtures.ts`
+
+**apps/web/src/shared/components (new):**
+- `RoleBanner.tsx`, `ButtonPrimary.tsx`, `ButtonRole.tsx`, `StatusBadge.tsx`, `NoticeDisclaimer.tsx`
+- `CipherCell.tsx`
+- `DataTable.tsx`, `AuditLogRow.tsx`, `DisclosureReceiptCard.tsx`
+- `StatePrimitives.tsx` (SkeletonLoader / ErrorCard / EmptyState)
+- `index.ts` (barrel)
+- `atoms.test.tsx`, `frames.test.tsx`, `CipherCell.test.tsx`
+
+**apps/web/src/shared/RoleSwitcher (new):**
+- `RoleSwitcher.tsx`, `index.ts`, `RoleSwitcher.test.tsx`
+
+**apps/web/src/shared (new):**
+- `guardrails.test.ts`
+
+**Tracking (modified):**
+- `_bmad-output/implementation-artifacts/1-0-ui-contract-signature-cell.md` (frontmatter `baseline_commit`, task checkboxes, Dev Agent Record, Status)
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` (1-0 → in-progress → review)
+
+## Change Log
+
+| Date | Change |
+|---|---|
+| 2026-06-20 | Story 1.0 implemented. Scaffolded pnpm workspace + copy-then-pruned `kaisho` `apps/web`; built the Aperture token contract, atomic kit, `<CipherCell>` + identity invariant, stub frames, RoleSwitcher shell (Mode B Holder front door), state primitives, fixture harness, and lint zones. All ACs covered by passing tests (33/33). Build + lint green. Status → review. |
+
+## Review Findings
+
+### Decision-Needed
+
+*(all resolved as patches — see Patches section)*
+
+### Patches
+
+- [x] [Review][Patch] Refactor `RoleSwitcher` into a nav-rail-only component; move active-lens content rendering into `App.tsx` as the main content area (AC-6) [`apps/web/src/shared/RoleSwitcher/RoleSwitcher.tsx`, `apps/web/src/App.tsx`]
+- [x] [Review][Patch] `guardrails.test.ts` node:* exemption is an oversight — fix by moving the file-walking test logic to avoid Node built-ins (e.g. `import.meta.glob`) OR explicitly document the test-file carve-out in `guardrails.mjs` comments (AC-9) [`apps/web/src/shared/guardrails.test.ts`, `apps/web/scripts/guardrails.mjs`]
+- [x] [Review][Patch] Add nine role accent CSS variables as static named entries in the `tokens.ts` `color` object (`rolePayer`, `roleHolder`, `roleAuditor` + `-foreground`/`-muted` variants), keeping `roleAccent()` as a convenience helper (AC-1) [`apps/web/src/theme/tokens.ts`]
+- [x] [Review][Patch] `guardrails.mjs` hex-color regex `/#[0-9a-fA-F]{3,8}\b/` triggers false-positives on git SHAs in comments, CSS id selectors (`#root`), and TypeScript private field syntax — strip comments before matching [`apps/web/scripts/guardrails.mjs:41`]
+- [x] [Review][Patch] `CipherCell` width reservation: `maskWidth=0` or empty `value` produce `minWidth: '0ch'`, breaking the no-reflow guarantee; also `ch` unit on formatted strings like `"3,000.00 USDC"` is imprecise [`apps/web/src/shared/components/CipherCell.tsx:32`]
+- [x] [Review][Patch] `CipherCell` no-reflow test compares two renders with the same `value` — cannot fail by construction; must compare a masked cell vs a revealed cell with differing string lengths [`apps/web/src/shared/components/CipherCell.test.tsx`]
+- [x] [Review][Patch] `StatusBadge` uses `role="status"` (ARIA live region) on static verdict badges — screen readers announce every badge on any DOM update; use no role or `role="img"` for a static indicator [`apps/web/src/shared/components/StatusBadge.tsx`]
+- [x] [Review][Patch] `darkMode: 'class'` with jsdom test environment: Tailwind `dark:` variants silently render in light mode in vitest because the rendered subtrees lack an `<html class="dark">` ancestor — add `document.documentElement.classList.add('dark')` to `test/setup.ts` [`apps/web/src/test/setup.ts`]
+- [x] [Review][Patch] `RoleBanner` uses `role="banner"` — a page-level landmark (one per page); inappropriate for a recurring in-lens component; remove the role or use a more appropriate landmark [`apps/web/src/shared/components/RoleBanner.tsx`]
+- [x] [Review][Patch] `ButtonPrimary` and `ButtonRole` hardcode `fontSize: '14px'` as an inline literal, bypassing the typography token system — replace with the `body` Tailwind class or token reference (AC-2 / hard design rule) [`apps/web/src/shared/components/ButtonPrimary.tsx`, `ButtonRole.tsx`]
+- [x] [Review][Patch] `AuditLogRow` uses `visibility: hidden` for the genesis chain-marker — element remains in the accessibility tree; use `display: none` or `aria-hidden="true"` instead [`apps/web/src/shared/components/AuditLogRow.tsx`]
+- [x] [Review][Patch] `CipherCell` state `'revealed'` with `value` undefined renders a visually empty cell and an `aria-label` of `"Revealed value "` (trailing space) — add a fallback string or require `value` when `state='revealed'` via TypeScript [`apps/web/src/shared/components/CipherCell.tsx:59`]
+- [x] [Review][Patch] `guardrails.mjs` `readdirSync(SRC)` throws unhandled `ENOENT` if run from the wrong directory — add an existence check before scanning [`apps/web/scripts/guardrails.mjs:60-67`]
+- [x] [Review][Patch] `guardrails.mjs` `readFileSync` throws on unreadable/binary files, aborting the entire lint run silently — wrap in try/catch and count as a violation [`apps/web/scripts/guardrails.mjs:74`]
+- [x] [Review][Patch] `DataTable` uses `key={c}` (column name string) for `<th>` elements — duplicate column names cause React key collision warnings; use `key={`${c}-${i}`}` [`apps/web/src/shared/components/DataTable.tsx`]
+- [x] [Review][Patch] `StatePrimitives` `SkeletonLoader` with `lines=0` renders a `role="status"` container with zero children and no visual affordance — apply `Math.max(1, lines)` or document minimum [`apps/web/src/shared/components/StatePrimitives.tsx`]
+- [x] [Review][Patch] `CipherCell` dots glyph is `aria-hidden="true"` — the visual masked marker is hidden from the accessibility tree, weakening AC-8 ("sealed vs revealed distinguishable by glyph/marker, not color alone"); remove `aria-hidden` or expose the glyph to the accessible name [`apps/web/src/shared/components/CipherCell.tsx:1505`]
+
+### Deferred
+
+- [x] [Review][Defer] `sprint-status.yaml` `last_updated` field uses freeform date+notes string instead of a parseable date scalar — deferred, pre-existing convention established before this story
+- [x] [Review][Defer] `CipherCell` `revealing` state renders identically to `masked` with only `aria-busy=true` distinction; no visual progress indicator — deferred, pre-existing: instantaneous-swap transition is specified; real revealing visual treatment comes with async crypto in Stories 2.3/4.1
+- [x] [Review][Defer] `DataTable` empty `columns` array renders empty `<thead>` — deferred, pre-existing: stub frame; real column validation comes with data binding in later stories
+- [x] [Review][Defer] `RoleSwitcher` `defaultRole` prop changes after mount are silently ignored (`useState` uncontrolled pattern) — deferred, pre-existing: fixture-only stub; no external controlled switching needed until lens routing is wired
+- [x] [Review][Defer] `tokens.ts` `roleAccent()` called with non-typed string from JS interop returns undefined CSS vars — deferred, pre-existing: TypeScript union prevents at compile time; no JS interop in this story
+- [x] [Review][Defer] `AuditLogRow` `chained=true` with undefined `children` renders an empty row — deferred, pre-existing: stub frame; fixture always provides children
+
 ## Open Questions for Tenny
+
+> **Resolved during dev-story (2026-06-20):** Q1 — scaffold produced as the opening move of 1.0 (pnpm workspace + pruned kaisho `apps/web`). Q2 — IBM Plex Mono confirmed. Q3 — dark-only confirmed. Original questions retained below for traceability.
 
 1. **Scaffold sequencing (blocking dependency).** The pruned kaisho `apps/web` base is assigned to Story 1.1a's collaborator slice but is a hard prerequisite for Story 1.0. Should the one-time scaffold (pnpm workspace + submodule + pruned web base) be split out as a tiny shared "Story 1.0-pre / scaffold" task so both 1.0 and 1.1a can truly start in parallel, or does Tenny prune the web base first as the opening move of 1.0?
 2. **Mono font choice.** DESIGN.md marks IBM Plex Mono as `[ASSUMPTION]` with JetBrains Mono as the alternate. Confirm IBM Plex Mono before the font is wired (changing it later touches every data cell).
