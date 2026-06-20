@@ -25,15 +25,17 @@ VENDORED_TS_SDK_PKG="$VENDORED_CONTRA/ts-sdk/package.json"
 # 0. Refuse to run if the submodule isn't initialised. Patching P22b: a
 #    `mkdir -p` here would silently create vendor/contra as a regular
 #    directory, masking the missing-submodule state.
-if [ ! -d "$VENDORED_CONTRA" ] || [ ! -e "$VENDORED_CONTRA/.git" ] && [ ! -f "$VENDORED_CONTRA/.git" ]; then
+if [ ! -d "$VENDORED_CONTRA" ] || { [ ! -e "$VENDORED_CONTRA/.git" ] && [ ! -f "$VENDORED_CONTRA/.git" ]; }; then
   printf '\033[31m✗ regen-pin: vendor/contra submodule is not initialised.\033[0m\n' >&2
   printf '  Run \`git submodule update --init --recursive\` first.\n' >&2
   exit 1
 fi
 
 # 1. Extract the Move git sha from move/Move.toml (tracked source of truth).
-MOVE_SHA=$(grep -E '^\s*rev\s*=\s*"[0-9a-f]{40}"' "$REPO_ROOT/move/Move.toml" \
-  | head -1 | sed -E 's/.*"([0-9a-f]{40})".*/\1/')
+#    Accept mixed-case SHAs (humans paste them) and lowercase-normalise so the
+#    shell layer agrees with adapterVersion.test.ts:readPin() (P-MED-3).
+MOVE_SHA=$(grep -E '^\s*rev\s*=\s*"[0-9a-fA-F]{40}"' "$REPO_ROOT/move/Move.toml" \
+  | head -1 | sed -E 's/.*"([0-9a-fA-F]{40})".*/\1/' | tr 'A-F' 'a-f')
 
 if [ -z "$MOVE_SHA" ]; then
   printf '\033[31m✗ regen-pin: could not extract Move git sha from move/Move.toml\033[0m\n' >&2
@@ -54,6 +56,10 @@ fi
 # gives a useful error instead of an opaque SyntaxError.
 TS_SDK_VERSION=""
 if command -v node >/dev/null 2>&1; then
+  # P-MED-1: capture stdout only on the success path so Node deprecation
+  # warnings / ExperimentalWarnings don't get concatenated into TS_SDK_VERSION
+  # and silently corrupt PINNED_VERSION. On failure, re-run the node command
+  # to surface the real error to stderr.
   TS_SDK_VERSION=$(node -e '
     const fs = require("node:fs");
     try {
@@ -64,8 +70,12 @@ if command -v node >/dev/null 2>&1; then
       process.stderr.write("failed to parse ts-sdk package.json: " + e.message + "\n");
       process.exit(2);
     }
-  ' "$VENDORED_TS_SDK_PKG" 2>&1) || {
-    printf '\033[31m✗ regen-pin: %s\033[0m\n' "$TS_SDK_VERSION" >&2
+  ' "$VENDORED_TS_SDK_PKG" 2>/dev/null) || {
+    node -e 'process.stderr.write("ts-sdk parse failed; see below\n")' >&2
+    node -e '
+      const fs = require("node:fs");
+      const pkg = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+    ' "$VENDORED_TS_SDK_PKG" >&2 || true
     exit 1
   }
 else
@@ -95,7 +105,8 @@ cat > "$PIN_PATH" << EOF
 Move git sha: $MOVE_SHA
 ts-sdk version: $TS_SDK_VERSION
 upstream: https://github.com/MystenLabs/confidential-transfers
-branch: main
+# No "branch =" line — the pin is SHA-only by design (D1). Re-pinning
+# means: git -C vendor/contra checkout <NEW_SHA> + pnpm postinstall.
 pinned_at: $(date -u +%Y-%m-%d)
 EOF
 

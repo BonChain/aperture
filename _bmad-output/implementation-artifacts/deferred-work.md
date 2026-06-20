@@ -1,10 +1,22 @@
 # Deferred Work
 
-## Deferred from: code review of 1-0-ui-contract-signature-cell (2026-06-20)
+Items consciously deferred from prior code review sessions, with reason
+and the story in which they will be addressed.
 
-- `sprint-status.yaml` `last_updated` field uses freeform date+notes string instead of a parseable date scalar — pre-existing convention established before this story; no downstream tooling currently parses it as a typed date
-- `CipherCell` `revealing` state renders identically to `masked` with only `aria-busy=true` distinction; no visual progress indicator — instantaneous-swap transition is specified for 1.0; real revealing visual treatment (e.g. spinner or progress ring) comes with async crypto in Stories 2.3/4.1
-- `DataTable` empty `columns` array renders an empty `<thead>` with no accessible column scope — stub frame only; real column validation comes with data binding in later stories
-- `RoleSwitcher` `defaultRole` prop changes after mount are silently ignored (uncontrolled `useState` pattern) — fixture-only stub; no external controlled switching needed until lens routing is wired in later stories
-- `tokens.ts` `roleAccent()` called with a non-typed string from JS interop returns undefined CSS vars (`var(--role-undefined)`) — TypeScript union prevents this at compile time; no JS interop exists in this story's scope
-- `AuditLogRow` `chained=true` with undefined `children` renders a row with only the chain-marker glyph and no content text — stub frame; fixture always provides children; real validation comes with audit-log data binding in Story 2.2
+## Deferred from: code review of 1-1a-vendored-pinned-baseline-first-green-build (2026-06-20)
+
+### [Review][Defer · LOW] `timingSafeEqual` leaks length / not constant-time across unequal lengths
+
+- **Location:** `packages/core/src/crypto/index.ts` → `timingSafeEqual(a, b)`
+- **Why deferred:** The early `return false` on length mismatch is observably
+  faster than the subsequent XOR loop, leaking the length comparison timing.
+  Node's own `crypto.timingSafeEqual` *throws* on length mismatch instead. The
+  equal-length comparison itself is constant-time and correct.
+- **Accepted for:** Story 1.1a placeholder scope (per Tenny's PR #1 review).
+  No real key comparison happens against untrusted input yet — only the helper
+  exists for downstream stories.
+- **Will be addressed in:** Story 1.1b (real key-comparison work). Will
+  replace with: pre-check `a.length === b.length` then XOR-and-OR pattern that
+  runs in fixed time regardless of input, **or** throw on length mismatch
+  (matching Node's API) and let callers ensure equal-length pre-conditions.
+- **Status:** no change required now. Tracked here for traceability.
