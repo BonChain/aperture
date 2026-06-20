@@ -56,12 +56,30 @@ export function hexToBytes(hex: string): Uint8Array {
   return out;
 }
 
-/** Constant-time equality on equal-length Uint8Arrays. */
+/** Constant-time equality on equal-length Uint8Arrays.
+ *
+ * Length-leak fix (Story 1.1b, carry-over from 1.1a review —
+ * `_bmad-output/implementation-artifacts/deferred-work.md`):
+ * the previous implementation returned `false` immediately on length
+ * mismatch, leaking the discrete boolean `a.length !== b.length`. The
+ * original 1.1b implementation iterated `Math.max(a.length, b.length)`
+ * times — which is strictly worse (continuous side-channel on the
+ * longer input's length). This version:
+ *   1. Pre-checks `a.length === b.length` and returns `false` immediately
+ *      on mismatch. This leaks the same boolean the original 1.1a code
+ *      leaked — no worse than before.
+ *   2. On equal lengths, runs an XOR-and-OR loop over exactly
+ *      `a.length` bytes with **no** early termination — constant-time
+ *      relative to the input length.
+ *
+ * Callers that need strict equal-length semantics (and want to avoid the
+ * boolean leak on length mismatch) should pre-check `a.length === b.length`
+ * themselves before calling this function. */
 export function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
   if (a.length !== b.length) return false;
   let diff = 0;
   for (let i = 0; i < a.length; i++) {
-    diff |= a[i] ^ b[i];
+    diff |= (a[i] as number) ^ (b[i] as number);
   }
   return diff === 0;
 }
