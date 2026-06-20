@@ -1,0 +1,9 @@
+# wasm-pack output
+pkg/
+# cargo build artifacts
+target/
+# Cargo.lock is INTENTIONALLY TRACKED for a library (cdylib+rlib) crate so
+# the wasm artifact is reproducible across `cargo update` cycles. Per Story
+# 1.1a review P9: this was previously gitignored, which combined with an
+# unpinned wasm-bindgen dep meant the emitted _bg.wasm hash was unstable.
+# Cargo.lock

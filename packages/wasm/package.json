@@ -1,0 +1,10 @@
+{
+  "name": "@aperture/wasm",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Aperture wasm package — Story 1.1a stub. Real bulletproofs land in 1.1b.",
+  "scripts": {
+    "build:wasm": "wasm-pack build --release --target web --out-dir pkg .",
+    "build:wasm:dev": "wasm-pack build --dev --target web --out-dir pkg ."
+  }
+}

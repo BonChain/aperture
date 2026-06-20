@@ -1,0 +1,22 @@
+[package]
+name = "aperture-wasm"
+version = "0.1.0"
+edition = "2021"
+description = "Aperture wasm package — first-green stub. Real bulletproofs are vendored from vendor/contra/utils/bulletproofs-wasm (Story 1.1b)."
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+# Pinned to the exact wasm-bindgen version that produced the Story 1.1a green
+# build. wasm-bindgen 0.2.x has had multiple breaking ABI shifts; combined with
+# the tracked Cargo.lock, this keeps `wasm-pack build --release` deterministic
+# across machines (Story 1.1a review P9).
+[dependencies]
+wasm-bindgen = "=0.2.125"
+
+[profile.release]
+# Same flags as the vendored bulletproofs-wasm to keep `wasmUrl` paths stable.
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"

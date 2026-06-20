@@ -1,0 +1,22 @@
+{
+  "name": "aperture",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Aperture — confidential payment + disclosure UI on top of MystenLabs/confidential-transfers (Contra). See CONVENTIONS.md for Forked/Modified/Built-new ledger.",
+  "type": "module",
+  "packageManager": "pnpm@11.8.0",
+  "scripts": {
+    "preflight": "./scripts/preflight.sh",
+    "postinstall": "./scripts/regen-pin.sh",
+    "build:wasm": "pnpm --filter @aperture/wasm build:wasm",
+    "build:crypto": "pnpm --filter @aperture/core build:crypto",
+    "build:first-green": "pnpm build:wasm && pnpm build:crypto",
+    "test": "pnpm --filter @aperture/core test && pnpm --filter @aperture/sdk test:adapter-version",
+    "test:adapter-version": "pnpm --filter @aperture/sdk test:adapter-version",
+    "verify:pin": "./scripts/verify-pin.sh"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "vitest": "^4.1.0"
+  }
+}

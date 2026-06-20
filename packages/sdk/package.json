@@ -1,0 +1,14 @@
+{
+  "name": "@aperture/sdk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Aperture SDK adapter — wraps vendored Contra ts-sdk. Per Story 1.1a AC3 this package is EXCLUDED from the first-green build target; only the pinned-version assertion test lives here. Full SDK build lands in 1.1b/SPIKE-2.",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:adapter-version": "vitest run test/adapterVersion.test.ts"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.0"
+  }
+}
