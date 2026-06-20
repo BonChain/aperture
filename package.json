@@ -1,14 +1,27 @@
-{
-	"name": "aperture",
-	"private": true,
-	"version": "0.0.0",
-	"description": "Aperture — disclosure layer for confidential payments on Sui (monorepo root)",
-	"type": "module",
-	"packageManager": "pnpm@11.8.0",
-	"scripts": {
-		"dev": "pnpm --filter web dev",
-		"build": "pnpm --filter web build",
-		"test": "pnpm --filter web test",
-		"lint": "pnpm --filter web lint"
-	}
-}
+# Aperture — root package
+
+Vendored pinned baseline of MystenLabs/confidential-transfers (Contra) +
+Aperture-built packages (Mode B, Move, role-disclosure, SDK adapter).
+
+> See `CONVENTIONS.md` for Forked / Modified / Built-new classification.
+> The single load-bearing pin lives at `vendor/contra/PINNED_VERSION` and is
+> mirrored in `move/Move.toml` `rev =` and `.npmrc` comment.
+
+## Quick start
+```bash
+./scripts/preflight.sh        # verify toolchain (AC1)
+git submodule update --init --recursive
+pnpm install                  # workspace install
+pnpm build:wasm               # wasm (Task 3 narrow green) — see scripts/build-wasm.sh
+pnpm -r --filter @aperture/core run build:crypto
+pnpm vitest run packages/sdk  # pinned-version assert
+```
+
+## Layout
+- `vendor/contra/` — read-only submodule (MystenLabs/confidential-transfers @ a0ec1e0)
+- `packages/wasm/` — `build:wasm` pipeline
+- `packages/core/` — isomorphic crypto helpers (no `node:*`)
+- `packages/sdk/` — vendored Contra ts-sdk adapter + version assert test
+- `move/` — Move sources (lands in Story 1.1b/1.1c; `Move.toml` `rev` is pinned in 1.1a)
+- `scripts/preflight.sh` — toolchain preflight (AC1)
+- `scripts/build-wasm.sh` — wrapper that pins `build:wasm` to WSL2 (AC6)
