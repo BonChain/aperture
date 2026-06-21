@@ -29,7 +29,9 @@ const RULES = [
 	},
 	{
 		id: 'no-crypto-import',
-		appliesTo: () => true,
+		// shared/adapters/ is the allowed seam for @aperture/core crypto imports (AR-15, Story 3.2).
+		// Lenses and components must NOT import core/crypto directly.
+		appliesTo: (path) => !path.replace(/\\/g, '/').includes('/shared/adapters/'),
 		test: (line) => /(?:from|import|require\()\s*['"][^'"]*core\/crypto/.test(line),
 		message: 'core/crypto import is banned from a lens/component (fixture-only, AR-15).',
 	},

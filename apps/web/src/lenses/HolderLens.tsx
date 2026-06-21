@@ -10,6 +10,8 @@ import { space } from '../theme/tokens';
 import { SelectEntries } from '../features/holder/SelectEntries';
 import { DEMO_REQUEST } from '../features/holder/demoRequest';
 import { VerifierRequestCard } from '../features/holder/VerifierRequestCard';
+import { ProofGenerator } from '../features/holder/ProofGenerator';
+import { MOCK_ENTRIES } from '../features/holder/mockEntries';
 
 export interface HolderLensProps {
 	sessionKey: SessionKey | null;
@@ -27,6 +29,13 @@ export default function HolderLens({ sessionKey }: HolderLensProps) {
 	// Story 4.4: lift verifyResult + provedAmount for two-column layout wiring.
 	const [verifyResult, setVerifyResult] = useState<'verified' | 'failed' | 'pending' | undefined>(undefined);
 	const [provedAmount, setProvedAmount] = useState<bigint | undefined>(undefined);
+
+	// Story 3.2: lifted selection state for ProofGenerator.
+	const [selectedIds, setSelectedIds] = useState<string[]>([]);
+	const totalAmount = MOCK_ENTRIES.filter((e) => selectedIds.includes(e.id)).reduce(
+		(acc, e) => acc + e.amount,
+		0n,
+	);
 
 	// Suppress unused-var lint until Story 3.3 wires onVerifyComplete into this lens.
 	void setVerifyResult;
@@ -68,9 +77,13 @@ export default function HolderLens({ sessionKey }: HolderLensProps) {
 						/>
 					</div>
 					{/* Right: SelectEntries + ProofGenerator (3.2) + VerifyResult (3.3) */}
-					<div style={{ flex: '1' }}>
-						<SelectEntries />
-						{/* ProofGenerator slots in here in Story 3.2 */}
+					<div style={{ flex: '1', display: 'flex', flexDirection: 'column', gap: space.s4 }}>
+						<SelectEntries onSelectionChange={setSelectedIds} />
+						<ProofGenerator
+							selectedIds={selectedIds}
+							totalAmount={totalAmount}
+							sessionKey={sessionKey}
+						/>
 					</div>
 				</div>
 			)}

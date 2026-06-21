@@ -9,6 +9,20 @@
 // ElGamal/bulletproofs wrappers land after SPIKE-1.
 
 export { H_BYTES } from "./hBytes.js";
+export {
+  RISTRETTO_N,
+  G_BYTES,
+  G,
+  H,
+  bytesFromBigIntLE,
+  readScalarLE,
+  uleb128,
+  bcsEncodeVectorVectorU8,
+  fiatShamirChallenge,
+  hashToScalar,
+  elgamalProve,
+  verifyElGamal,
+} from "./elgamal.js";
 
 /**
  * A 32-byte secret key, hex-encoded for transport. Pure type — no node:* deps.

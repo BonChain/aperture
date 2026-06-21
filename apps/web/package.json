@@ -15,6 +15,8 @@
 		"format:check": "prettier --check ."
 	},
 	"dependencies": {
+		"@noble/curves": "^2.2.0",
+		"@noble/hashes": "^2.2.0",
 		"@tanstack/react-query": "^5.101.0",
 		"react": "^19.2.7",
 		"react-dom": "^19.2.7"
