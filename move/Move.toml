@@ -10,4 +10,10 @@ rev = "a0ec1e08996074b11ade2a1ede035cf5a108d291"
 contra = { local = "../vendor/contra/move" }
 
 [environments]
-devnet = "4fe43958"
+# Current devnet chain id (2026-06-20). Devnet is periodically wiped;
+# after a reset, update this value to the new `sui client chain-identifier`
+# output and re-run `pnpm build:move && pnpm publish:devnet`. The framework
+# rev comes from the suiup toolchain (sui@devnet-1.73.0); the chain id here
+# is the publish-time assertion that the active devnet env matches the
+# Move package's expectation.
+devnet = "5ea2c653"

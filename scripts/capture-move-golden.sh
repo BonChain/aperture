@@ -23,7 +23,7 @@ mkdir -p "$OUT_DIR"
 
 # Run only the BCS vector test to keep output tight. The filter matches the
 # fully-qualified test name as a substring; `--path move` scopes the run.
-OUTPUT="$(sui move test --path move statement_bcs_vector_test 2>&1)" || {
+OUTPUT="$(sui move test --path move -e devnet statement_bcs_vector_test 2>&1)" || {
   echo "✗ sui move test failed; cannot capture golden vector" >&2
   exit 1
 }

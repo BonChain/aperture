@@ -66,3 +66,10 @@ coverage/
 move/build/
 
 # Spike package — fixtures are committed; nothing to ignore at the package level.
+
+# Story 1.1c additions — on-chain devnet fixture (Task 4)
+# Persists the published packageId + tx digest + move sources hash so
+# scripts/publish-devnet.sh can skip a redundant publish when sources
+# haven't changed. Gitignored because the packageId is environment-specific
+# and changes on every devnet reset.
+scripts/.published-devnet.json

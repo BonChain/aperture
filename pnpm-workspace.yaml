@@ -1,3 +1,4 @@
 packages:
   - 'packages/*'
+  - 'packages/spike/test/onchain'  # Story 1.1c on-chain test (uses @mysten/sui)
   - 'apps/*'

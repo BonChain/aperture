@@ -14,11 +14,24 @@
   - **Decision rationale (2026-06-20):** option (a) — pin to vendor/contra's rev for "no drift" with the vendored upstream. The v1.73.2 sui binary (newer than this rev) is back-compatible with this framework rev at build time. Note: running `sui move build` in `vendor/contra/move/` with the v1.73.2 binary will rewrite `vendor/contra/move/Move.lock` to the binary's bundled rev — this is expected Move behavior (Move.lock is a derived artifact), not a pin drift. To re-pin: update this entry + the Sui rev in `aperture/move/Move.toml` atomically.
 
 ## Toolchain
-- **sui CLI:** `sui 1.73.2-1f6e1e6dd72d` (`mainnet-v1.73.2`, published 2026-06-17)
-  - Installed at `~/sui/bin/sui` (WSL2 Ubuntu 26.04)
-  - PATH export: `export PATH="$HOME/sui/bin:$PATH"` (in `~/.bashrc`)
-  - Source: prebuilt tarball from `https://github.com/MystenLabs/sui/releases/download/mainnet-v1.73.2/sui-mainnet-v1.73.2-ubuntu-x86_64.tgz`
+- **sui CLI (target for SPIKE-1 on devnet):** `sui@devnet-1.73.0` (protocol 125, matches the devnet chain id pinned in `move/Move.toml`)
+  - Install via `suiup install sui@devnet-1.73.0 && suiup default set sui@devnet-1.73.0`
+  - Verified: `sui --version` reports `1.73.0-...`
+- **sui CLI (currently installed on this box, recorded 2026-06-20):** `sui 1.73.1-ff1fe0ec4551` (testnet channel, installed via suiup)
+  - Installed at `$HOME/.local/bin/sui` (WSL2 Ubuntu 26.04)
+  - This was installed prior to the SPIKE-1 devnet decision (1.1a baseline). SPIKE-1 on devnet requires the **devnet channel** sui binary; re-pin to `sui@devnet-1.73.0` per the target above.
+  - PATH export: `export PATH="$HOME/.local/bin:$PATH"` (suiup default location; in `~/.bashrc`)
   - Re-pin policy: when the installed `sui` binary changes, record the new version here AND update `scripts/preflight.sh` so the version assertion tracks.
+
+## Devnet (SPIKE-1 on-chain target)
+- **Active env:** `devnet` (`https://fullnode.devnet.sui.io:443`)
+- **Current devnet chain id (as of 2026-06-20):** `5ea2c653` — see `sui client chain-identifier` after `sui client switch --env devnet`.
+- **Pin in `move/Move.toml`:** `devnet = "4fe43958"` (historical chain id from the vendored Contra submodule at the time of pinning; the upstream vendor carries this exact value).
+- **Chain id drift handling:** the historical pin in `Move.toml` is the *build-time* assertion, not the *publish-time* target. `sui move build` resolves the framework rev via the pin; `sui client publish` targets the CLI's active env. If the build errors with a chain-id mismatch, see Story 1.1c "devnet reset" section below.
+- **Devnet reset policy:** devnet is periodically wiped. After a reset:
+  1. The pinned Move framework rev may advance (regen `move/Move.lock`).
+  2. Published `aperture` package ids from before the reset are lost.
+  3. Re-run `pnpm pretest:devnet && pnpm publish:devnet` to republish; `scripts/.published-devnet.json` regenerates with the new id.
 
 ## Ledger
 

@@ -126,6 +126,40 @@ module aperture::verifier {
 
     public fun proof_z2(p: &ElGamalProof): vector<u8> { *p.z2.bytes() }
 
+    /// Error code for `verify_aggregate` when the proof does not verify.
+    const E_VERIFY_FAILED: u64 = 100;
+
+    /// Single-entry verify call consumed by the on-chain test (Story 1.1c).
+    /// Takes raw bytes (the off-chain fixture shape) and asserts the proof
+    /// verifies. Aborts with `E_VERIFY_FAILED` if the verify relation fails,
+    /// succeeds otherwise. The on-chain test reads the tx status (success
+    /// vs abort) to determine the boolean result — the @mysten/sui v2.19.0
+    /// SDK does not surface PTB return values in effects on devnet, so the
+    /// boolean cannot be read back from the chain directly. Asserting on
+    /// the abort status is the cleanest test pattern (and matches the
+    /// 3.3 verify experience which only needs pass/fail).
+    ///
+    /// An invalid Ristretto point / scalar in the inputs WILL abort via
+    /// `g_from_bytes` / `scalar_from_bytes` — that's a different failure
+    /// mode and is the right behavior for a malformed input.
+    public fun verify_aggregate(
+        dst: vector<u8>,
+        pk: vector<u8>,
+        ciphertext: vector<u8>,
+        decryption_handle: vector<u8>,
+        amount: u64,
+        proof_a: vector<u8>,
+        proof_b: vector<u8>,
+        proof_z1: vector<u8>,
+        proof_z2: vector<u8>,
+    ) {
+        let s = aperture::statement::new(
+            dst, pk, ciphertext, decryption_handle, amount,
+        );
+        let p = new_elgamal_proof(proof_a, proof_b, proof_z1, proof_z2);
+        assert!(verify(&s, &p), E_VERIFY_FAILED);
+    }
+
     /// Fiat-Shamir challenge for the ElGamal proof — mirrors
     /// `contra::nizk::challenge_elgamal`.
     #[allow(implicit_const_copy)]

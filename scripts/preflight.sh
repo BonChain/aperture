@@ -101,6 +101,22 @@ else
   die "git" "install git (e.g. \`sudo apt install git\`)"
 fi
 
+# 7. sui CLI on devnet channel (SPIKE-1 on devnet — Story 1.1c)
+#    Warn (not fail) if the sui binary is missing or on a non-devnet channel;
+#    off-chain work (1.1a/1.1b) doesn't need it. The `pnpm pretest:devnet`
+#    script and the on-chain test fail loud on the wrong channel.
+if have sui; then
+  SUI_VER=$(sui --version 2>/dev/null | awk '{print $NF}' || echo "unknown")
+  SUI_ACTIVE=$(sui client active-env 2>/dev/null | tr -d '[]' | awk '{print $NF}' || echo "unknown")
+  if [ "$SUI_ACTIVE" = "devnet" ]; then
+    ok "sui ${SUI_VER} (active env: devnet)"
+  else
+    warn "sui active env" "currently '${SUI_ACTIVE}' — SPIKE-1 on-chain needs \`sui client switch --env devnet\`"
+  fi
+else
+  warn "sui CLI" "not found — install via \`suiup install sui@devnet-1.73.0 && suiup default set sui@devnet-1.73.0\` (required for Story 1.1c on-chain)"
+fi
+
 printf "\n\033[1mSummary:\033[0m pass=%d warn=%d fail=%d\n" "$PASS" "$WARN" "$FAIL"
 
 if [ "$FAIL" -gt 0 ]; then

@@ -386,7 +386,7 @@ aperture/
 
 ### Gap Analysis Results
 - **CRITICAL (OPEN):** **Mode B feasibility is unproven** — the differentiator depends on the `Ciphertext.add → ElGamalNizk → verify_elgamal` round-trip succeeding off-chain AND on-chain, which SPIKE-1 has not yet run. This is an open critical-path risk, NOT a closed gate. It is mitigated (FR-18 fallback + recorded-clip plan) but not resolved.
-- **CRITICAL (OPEN):** SPIKE-1 on-chain assertion has un-called-out prerequisites (localnet, published Move package + id, funded address, dlog-table question) — must be a fixture before "green."
+- **CRITICAL (OPEN):** SPIKE-1 on-chain assertion has un-called-out prerequisites (devnet env, published Move package + id, funded address, dlog-table question) — must be a fixture before "green."
 - **Important:** NFR-6 reference hardware undefined; no standalone UX spec; one-wallet-3-roles weakens the confidentiality narrative (demo item to resolve).
 - **Accepted risks (explicit):** Contra is **unaudited beta** — pinning gives reproducibility, NOT correctness/security assurance; building a financial-confidentiality PoC on it is an accepted hackathon-scope risk. Honesty guardrail ("selected sum ≠ total income") is a trust/UX claim not yet validated with users.
 
@@ -398,7 +398,7 @@ aperture/
 ### SPIKE-1 Day-1 Prerequisites & Blockers
 - **#1 blocker — Fiat-Shamir transcript byte-parity:** wasm prover vs Move verifier must agree byte-for-byte on challenge-hash serialization (domain-sep tag, Ristretto point compression, scalar endianness). **Write an interop vector test first** (wasm prove → dump bytes → assert against a fixture) BEFORE touching the chain — off-chain green / on-chain red is the classic failure here.
 - **Toolchain landmines:** run `build:wasm` in **WSL2/container** (not Windows native); `git submodule update --init --recursive` + verify pinned commit; pin `curve25519-dalek`/feature flags.
-- **Hidden on-chain prereqs (make an idempotent `pretest` fixture):** (1) **localnet** validator running (not Devnet — determinism); (2) Move package **published** + package id written back to SDK config; (3) active address **funded**; (4) confirm whether on-chain verify needs a **dlog table** or checks commitment-equality with X as public input.
+- **Hidden on-chain prereqs (make an idempotent `pretest-devnet` fixture):** (1) **devnet** env active (matches the SRS target network — `pnpm deploy:devnet` is the FR-20 end state); (2) Move package **published** + package id written to `scripts/.published-devnet.json` (gitignored); (3) active address **funded** via devnet faucet (topped up if below 0.5 SUI); (4) confirm whether on-chain verify needs a **dlog table** or checks commitment-equality with X as public input. (Updated from localnet to devnet per the 2026-06-20 re-pin — see Story 1.1c impl doc.)
 - **Test split:** separate `it('verifies off-chain')` (core+wasm, green first) from `it('verifies on-chain')` (gated behind the fixture) so a red result is unambiguous.
 
 ### Architecture Completeness Checklist
