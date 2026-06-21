@@ -62,14 +62,27 @@ coverage/
 # warning. If a fresh clone shows "Untracked content" under vendor/contra,
 # that's the pin file and it is expected.
 
-# Story 1.1b additions — Move build artifacts (Task 1)
+# Move build artifacts
 move/build/
+
+# move/Published.toml is INTENTIONALLY TRACKED — Move toolchain uses it to
+# track published package addresses for upgrades. Do NOT add it here.
+# Contrast with scripts/.published-devnet.json (gitignored — our own cache).
 
 # Spike package — fixtures are committed; nothing to ignore at the package level.
 
-# Story 1.1c additions — on-chain devnet fixture (Task 4)
+# On-chain devnet fixture cache
 # Persists the published packageId + tx digest + move sources hash so
 # scripts/publish-devnet.sh can skip a redundant publish when sources
 # haven't changed. Gitignored because the packageId is environment-specific
 # and changes on every devnet reset.
 scripts/.published-devnet.json
+
+# Vitest cache (v2+ creates .vitest/ in project root under some configs)
+.vitest/
+.vitest-cache/
+
+# Vite / web app — build outputs and local env overrides
+apps/web/dist/
+apps/*/.env.local
+apps/*/.env.*.local

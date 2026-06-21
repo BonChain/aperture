@@ -27,6 +27,15 @@ module aperture::aperture_tests {
     const TEST_BLINDING: u64 = 67890;
     const TEST_SK: u64 = 12345;
 
+    // Aggregate constants (SPIKE-1 addendum) — match
+    // packages/spike/scripts/generate-aggregate-proof.ts,
+    // packages/spike/src/spike1.aggregate.test.ts, and the aggregate block of
+    // packages/spike/test/onchain/onchain.devnet.test.ts.
+    const ENTRY_A_AMOUNT: u64 = 40000;
+    const ENTRY_A_BLINDING: u64 = 11111;
+    const ENTRY_B_AMOUNT: u64 = 30000;
+    const ENTRY_B_BLINDING: u64 = 22222;
+
     #[test]
     /// Deterministic Statement → BCS round-trip. Uses the same encoding
     /// `aperture::statement::to_bcs` uses; the `debug::print` is captured by
@@ -84,6 +93,57 @@ module aperture::aperture_tests {
             verifier::proof_z2(&proof),
         );
         assert!(!verifier::verify(&s, &tampered_proof), 0);
+    }
+
+    #[test]
+    /// SPIKE-1 addendum: AGGREGATE round-trip. Encrypt two entries under one
+    /// pk, sum the ciphertexts (`Ciphertext.add` = `g_add` on c1 AND the
+    /// decryption handle), prove the aggregate, verify. The summed amount
+    /// (70000) exceeds 2^16 — the deliberate limb-0 carry from
+    /// `architecture.md` line 51. This proves the proof RELATION is carry-safe
+    /// (the aggregate verifies on-chain). The DECRYPTABILITY bound (a real
+    /// Contra aggregate becoming undecryptable past 2^16 on the 16-bit dlog
+    /// table) is NOT modelled by this single-scalar ElGamal and stays a
+    /// Story 3.1 prerequisite: bound-and-reject at selection time.
+    fun verify_elgamal_aggregate_round_trip() {
+        let g = verifier::verifier_test_only_g();
+        let h = verifier::verifier_test_only_h();
+        let pk = g_mul(&scalar_from_u64(TEST_SK), &g);
+
+        // Two encrypted entries: c1 = blinding*g + amount*h ; dh = blinding*pk
+        let c1_a = g_add(
+            &g_mul(&scalar_from_u64(ENTRY_A_BLINDING), &g),
+            &g_mul(&scalar_from_u64(ENTRY_A_AMOUNT), &h),
+        );
+        let dh_a = g_mul(&scalar_from_u64(ENTRY_A_BLINDING), &pk);
+        let c1_b = g_add(
+            &g_mul(&scalar_from_u64(ENTRY_B_BLINDING), &g),
+            &g_mul(&scalar_from_u64(ENTRY_B_AMOUNT), &h),
+        );
+        let dh_b = g_mul(&scalar_from_u64(ENTRY_B_BLINDING), &pk);
+
+        // Ciphertext.add — component-wise Ristretto addition.
+        let c1_agg = g_add(&c1_a, &c1_b);
+        let dh_agg = g_add(&dh_a, &dh_b);
+
+        let agg_amount = ENTRY_A_AMOUNT + ENTRY_B_AMOUNT; // 70000 > 2^16
+        let agg_blinding = ENTRY_A_BLINDING + ENTRY_B_BLINDING;
+        let s = statement::new(
+            vector[],
+            *pk.bytes(),
+            *c1_agg.bytes(),
+            *dh_agg.bytes(),
+            agg_amount,
+        );
+        let proof = verifier::prove_for_testing(
+            statement::dst(&s),
+            &pk,
+            &c1_agg,
+            &dh_agg,
+            agg_amount,
+            agg_blinding,
+        );
+        assert!(verifier::verify(&s, &proof), 0);
     }
 
     /// Build a Statement using real `pk = TEST_SK * g`, real ciphertext
