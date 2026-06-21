@@ -27,7 +27,7 @@ describe('VerifyResult', () => {
 			render(<VerifyResult verdict="verified" txDigest={DIGEST} />);
 			const link = screen.getByRole('link') as HTMLAnchorElement;
 			expect(link.getAttribute('href')).toBe(
-				`https://suiexplorer.com/txblock/${DIGEST}?network=devnet`,
+				`https://suiscan.xyz/devnet/tx/${DIGEST}`,
 			);
 		});
 
@@ -56,7 +56,7 @@ describe('VerifyResult', () => {
 			render(<VerifyResult verdict="verified" txDigest={DIGEST} network="testnet" />);
 			const link = screen.getByRole('link') as HTMLAnchorElement;
 			expect(link.getAttribute('href')).toBe(
-				`https://suiexplorer.com/txblock/${DIGEST}?network=testnet`,
+				`https://suiscan.xyz/testnet/tx/${DIGEST}`,
 			);
 		});
 	});

@@ -14,7 +14,11 @@
 
 import { useState } from 'react';
 
-import { runVerify, type VerifyInput } from '../../shared/adapters/verifyAdapter';
+import { verifyOffChain, type VerifyInput } from '../../shared/adapters/verifyAdapter';
+import { useWalletSession } from '../../shared/wallet/walletSession';
+import { aperturePackageId, APERTURE_NETWORK } from '../../shared/aperture';
+import { explorerObjectUrl } from '../../shared/explorerLink';
+import { usd } from '../../shared/format';
 import { StatusBadge } from '../../shared/components/StatusBadge';
 import { color, space } from '../../theme/tokens';
 
@@ -100,17 +104,29 @@ function parseHex(hex: string): Uint8Array | null {
  * POST /api/proofs/verify (async ~4.5s on devnet). Degrades gracefully if
  * the devnet endpoint is unavailable (AC-5).
  */
-export function VerifyProof() {
-  const [pubkeyHex, setPubkeyHex] = useState('');
-  const [ciphertextHex, setCiphertextHex] = useState('');
-  const [dhHex, setDhHex] = useState('');
-  const [amountStr, setAmountStr] = useState('');
-  const [proofHex, setProofHex] = useState('');
+export interface VerifyProofInitial {
+  pubkeyHex?: string;
+  ciphertextHex?: string;
+  dhHex?: string;
+  amountStr?: string;
+  proofHex?: string;
+}
+
+export interface VerifyProofProps {
+  /** Pre-fill the fields — used when a holder's proof is handed to the Auditor. */
+  initial?: VerifyProofInitial;
+}
+
+export function VerifyProof({ initial }: VerifyProofProps = {}) {
+  const wallet = useWalletSession();
+  const [pubkeyHex, setPubkeyHex] = useState(initial?.pubkeyHex ?? '');
+  const [ciphertextHex, setCiphertextHex] = useState(initial?.ciphertextHex ?? '');
+  const [dhHex, setDhHex] = useState(initial?.dhHex ?? '');
+  const [amountStr, setAmountStr] = useState(initial?.amountStr ?? '');
+  const [proofHex, setProofHex] = useState(initial?.proofHex ?? '');
   const [phase, setPhase] = useState<VerifyPhase>({ tag: 'idle' });
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-
+  async function handleSubmit() {
     const pk = parseHex(pubkeyHex);
     const ciphertext = parseHex(ciphertextHex);
     const dh = parseHex(dhHex);
@@ -145,16 +161,25 @@ export function VerifyProof() {
     setPhase({ tag: 'loading' });
 
     try {
-      const result = await runVerify(input, amount);
-      if (!result.offChain) {
+      // Off-chain first — synchronous, <10ms, in-browser.
+      if (!verifyOffChain(input)) {
         setPhase({ tag: 'failed', reason: 'off-chain' });
-      } else if (result.onChain === 'abort:100') {
+        return;
+      }
+      // On-chain (devnet) via read-only devInspect — no gas, no signature.
+      const onChain = await wallet.verifyOnChain({
+        pk,
+        ciphertext,
+        decryptionHandle: dh,
+        proof,
+        amount,
+      });
+      if (onChain === 'success') {
+        setPhase({ tag: 'verified', onChain: 'success' });
+      } else if (onChain === 'failure') {
         setPhase({ tag: 'failed', reason: 'on-chain' });
-      } else if (result.onChain === 'unreachable') {
-        setPhase({ tag: 'degraded' });
       } else {
-        // onChain === 'success' or null (no backend configured — treat as degraded)
-        setPhase({ tag: 'verified', onChain: result.onChain });
+        setPhase({ tag: 'degraded' });
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -167,13 +192,41 @@ export function VerifyProof() {
       data-testid="verify-proof"
       style={{ display: 'flex', flexDirection: 'column', gap: space.s4 }}
     >
-      <form
-        onSubmit={(e) => { void handleSubmit(e); }}
-        style={{ display: 'flex', flexDirection: 'column', gap: space.s3 }}
+      {/* Plain-language framing — parity with the Holder flow's explainers */}
+      <p className="type-body" style={{ color: color.inkSecondary, margin: 0 }}>
+        Confirm a holder's disclosed total — using only public data, never their key.
+      </p>
+
+      <button
+        type="button"
+        onClick={() => void handleSubmit()}
+        disabled={phase.tag === 'loading'}
+        aria-disabled={phase.tag === 'loading'}
+        data-action="verify-proof"
+        className="type-label"
+        style={{
+          background: color.inkPrimary,
+          color: color.surfaceBase,
+          border: 'none',
+          borderRadius: 'var(--radius-md)',
+          padding: `${space.s2} ${space.s4}`,
+          cursor: phase.tag === 'loading' ? 'not-allowed' : 'pointer',
+          alignSelf: 'flex-start',
+        }}
       >
-        <FieldRow
-          id="vp-pubkey"
-          label="Public key (32 bytes hex)"
+        Verify proof
+      </button>
+
+      {/* Raw proof inputs — collapsed when pre-filled from a holder, open for
+          manual paste. Keeps non-technical users out of the hex. */}
+      <details open={!initial}>
+        <summary className="type-label" style={{ color: color.inkSecondary, cursor: 'pointer' }}>
+          Show technical detail (proof inputs)
+        </summary>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: space.s3, marginTop: space.s3 }}>
+          <FieldRow
+            id="vp-pubkey"
+            label="Public key (32 bytes hex)"
           value={pubkeyHex}
           onChange={setPubkeyHex}
           placeholder="64 hex chars"
@@ -207,25 +260,8 @@ export function VerifyProof() {
           placeholder="256 hex chars"
         />
 
-        <button
-          type="submit"
-          disabled={phase.tag === 'loading'}
-          aria-disabled={phase.tag === 'loading'}
-          data-action="verify-proof"
-          className="type-label"
-          style={{
-            background: color.inkPrimary,
-            color: color.surfaceBase,
-            border: 'none',
-            borderRadius: 'var(--radius-md)',
-            padding: `${space.s2} ${space.s4}`,
-            cursor: phase.tag === 'loading' ? 'not-allowed' : 'pointer',
-            alignSelf: 'flex-start',
-          }}
-        >
-          Verify proof
-        </button>
-      </form>
+        </div>
+      </details>
 
       {/* Status area */}
       {phase.tag === 'loading' && (
@@ -250,9 +286,23 @@ export function VerifyProof() {
             <IconCheck />
             <StatusBadge verdict="verified" label="Verified" />
           </div>
+          {amountStr.trim() !== '' && (
+            <span className="type-body" style={{ color: color.inkPrimary }}>
+              The holder proved a total of {usd(amountStr)} — confirmed without their key, and
+              without their other activity.
+            </span>
+          )}
           {phase.onChain === 'success' && (
             <span className="type-caption" style={{ color: color.inkSecondary }}>
-              On-chain verification passed.
+              On-chain verification passed on devnet.{' '}
+              <a
+                href={explorerObjectUrl(aperturePackageId(), APERTURE_NETWORK)}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: color.primary }}
+              >
+                View module on Suiscan ↗
+              </a>
             </span>
           )}
           {phase.onChain === null && (

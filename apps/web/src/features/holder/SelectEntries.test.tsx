@@ -64,7 +64,7 @@ describe('SelectEntries — single selection', () => {
 		render(<SelectEntries />);
 		fireEvent.click(getCheckbox(/Salary — June/));
 		expect(screen.getByTestId('entry-count').textContent).toContain('1 of 4 entries selected');
-		expect(screen.getByTestId('selected-total').textContent).toContain('40000');
+		expect(screen.getByTestId('selected-total').textContent).toContain('40,000');
 	});
 });
 
@@ -74,7 +74,7 @@ describe('SelectEntries — two entries within limit', () => {
 		fireEvent.click(getCheckbox(/Salary — June/));
 		fireEvent.click(getCheckbox(/Bonus — H1/));
 		expect(screen.getByTestId('entry-count').textContent).toContain('2 of 4 entries selected');
-		expect(screen.getByTestId('selected-total').textContent).toContain('48000');
+		expect(screen.getByTestId('selected-total').textContent).toContain('48,000');
 		expect(getCheckbox(/Salary — June/).checked).toBe(true);
 		expect(getCheckbox(/Bonus — H1/).checked).toBe(true);
 	});

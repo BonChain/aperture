@@ -70,6 +70,28 @@ export const radius = {
 	full: 'var(--radius-full)',
 } as const;
 
+/**
+ * Glassmorphism surface — spread into a component's style to make it a frosted
+ * panel (translucent fill + backdrop blur + hairline light border). Opt-in skin
+ * over the deep-ink base; pair with `radius` for rounded glass.
+ */
+export const glass = {
+	background: 'var(--glass-bg)',
+	backdropFilter: 'blur(var(--glass-blur))',
+	WebkitBackdropFilter: 'blur(var(--glass-blur))',
+	border: '1px solid var(--glass-border)',
+	boxShadow: 'var(--glass-shadow)',
+} as const;
+
+/** A more opaque, brighter-bordered glass for elevated / focal panels. */
+export const glassStrong = {
+	background: 'var(--glass-bg-strong)',
+	backdropFilter: 'blur(var(--glass-blur))',
+	WebkitBackdropFilter: 'blur(var(--glass-blur))',
+	border: '1px solid var(--glass-border-strong)',
+	boxShadow: 'var(--glass-shadow)',
+} as const;
+
 export const font = {
 	ui: 'var(--font-ui)',
 	data: 'var(--font-data)',

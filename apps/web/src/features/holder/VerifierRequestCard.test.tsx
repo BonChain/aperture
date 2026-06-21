@@ -11,9 +11,9 @@ import { VerifierRequestCard } from './VerifierRequestCard';
 describe('demoRequest — fixture', () => {
 	it('DEMO_REQUEST has required fields', () => {
 		expect(DEMO_REQUEST.requestId).toBe('demo-verifier-1');
-		expect(DEMO_REQUEST.requiredAmount).toBe(50_000n);
+		expect(DEMO_REQUEST.requiredAmount).toBe(45_000n);
 		expect(DEMO_REQUEST.requesterName).toBe('Acme Lender');
-		expect(DEMO_REQUEST.message).toContain('50,000 MIST');
+		expect(DEMO_REQUEST.message).toContain('$45,000');
 	});
 
 	it('getActiveRequest() returns DEMO_REQUEST when no URL param', () => {
@@ -67,14 +67,14 @@ describe('VerifierRequestCard — idle (no verifyResult)', () => {
 		render(<VerifierRequestCard request={DEMO_REQUEST} />);
 		expect(
 			screen.getByText(
-				'Prove your selected total ≥ 50,000 MIST to proceed with your loan application.',
+				'Prove your selected total is at least $45,000 to proceed with your loan application.',
 			),
 		).toBeInTheDocument();
 	});
 
-	it('renders the required amount label "Requested figure"', () => {
+	it('renders the required amount label "Requested amount"', () => {
 		render(<VerifierRequestCard request={DEMO_REQUEST} />);
-		expect(screen.getByText('Requested figure')).toBeInTheDocument();
+		expect(screen.getByText('Requested amount')).toBeInTheDocument();
 	});
 
 	it('renders "Awaiting proof…" in idle state', () => {
@@ -137,7 +137,7 @@ describe('VerifierRequestCard — verified state', () => {
 			/>,
 		);
 		const verdictArea = screen.getByTestId('verdict-area');
-		expect(verdictArea.textContent).toContain('48,000 MIST');
+		expect(verdictArea.textContent).toContain('$48,000');
 	});
 
 	it('disclaimer is still visible in verified state (NFR-9)', () => {

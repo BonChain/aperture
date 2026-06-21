@@ -17,10 +17,12 @@ describe('RoleSwitcher shell (AC-6)', () => {
 		expect(container.querySelectorAll('[data-lens-slot]')).toHaveLength(3);
 	});
 
-	it('renders key-dependent actions disabled with "Sign to unlock →"', () => {
+	it('renders the lens descriptions and the Suiscan module link', () => {
 		render(<RoleSwitcher />);
-		const action = screen.getByRole('button', { name: 'Sign to unlock →' });
-		expect(action).toBeDisabled();
+		expect(
+			screen.getByText('Prove a figure about your encrypted activity.'),
+		).toBeInTheDocument();
+		expect(screen.getByRole('link', { name: /Suiscan/ })).toBeInTheDocument();
 	});
 
 	it('re-lenses on role switch (banner + accent follow the active role)', async () => {

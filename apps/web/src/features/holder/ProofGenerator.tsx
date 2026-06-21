@@ -25,6 +25,8 @@ FIXTURE_SK[1] = 0x30;
 
 export interface GenerateProofResult {
   proof: Uint8Array;
+  /** 32-byte holder public key — needed by the verifier (no secret key). */
+  pk: Uint8Array;
   c1: Uint8Array;
   dh: Uint8Array;
   amount: bigint;
@@ -102,6 +104,7 @@ export function ProofGenerator({
       const elapsedS = ((endMs - startMs) / 1000).toFixed(1);
       const result: GenerateProofResult = {
         proof: output.proof,
+        pk: statement.pk,
         c1: statement.ciphertext,
         dh: statement.decryptionHandle,
         amount: totalAmount,
@@ -158,7 +161,10 @@ export function ProofGenerator({
             flexDirection: 'column',
             gap: space.s2,
             padding: space.s3,
-            background: color.surfaceRaised,
+            background: 'var(--glass-bg)',
+            backdropFilter: 'blur(var(--glass-blur))',
+            WebkitBackdropFilter: 'blur(var(--glass-blur))',
+            border: '1px solid var(--glass-border)',
             borderRadius: 'var(--radius-sm)',
           }}
         >

@@ -2,6 +2,7 @@ import React from 'react';
 
 import { EmptyState } from '../../shared/components/StatePrimitives';
 import { NoticeDisclaimer } from '../../shared/components/NoticeDisclaimer';
+import { usd } from '../../shared/format';
 import { color, space } from '../../theme/tokens';
 
 // ---------------------------------------------------------------------------
@@ -48,16 +49,16 @@ export function SelectEntries({ onSelectionChange, entries = FIXTURE_ENTRIES }: 
 	);
 
 	function toggle(id: string) {
-		setSelected((prev) => {
-			const next = new Set(prev);
-			if (next.has(id)) {
-				next.delete(id);
-			} else {
-				next.add(id);
-			}
-			onSelectionChange?.([...next]);
-			return next;
-		});
+		// Compute the next selection in the event handler (not inside the state
+		// updater) so the parent callback never fires during render.
+		const next = new Set(selected);
+		if (next.has(id)) {
+			next.delete(id);
+		} else {
+			next.add(id);
+		}
+		setSelected(next);
+		onSelectionChange?.([...next]);
 	}
 
 	const selectedCount = selected.size;
@@ -127,7 +128,7 @@ export function SelectEntries({ onSelectionChange, entries = FIXTURE_ENTRIES }: 
 									{entry.label}
 								</span>
 								<span className="type-data" style={{ color: color.inkSecondary }}>
-									{entry.amount.toString()} MIST
+									{usd(entry.amount)}
 								</span>
 							</label>
 							{wouldExceed && (
@@ -162,10 +163,10 @@ export function SelectEntries({ onSelectionChange, entries = FIXTURE_ENTRIES }: 
 			{/* Running selected-sum — AC-1, UX-DR14 */}
 			<div style={{ display: 'flex', flexDirection: 'column', gap: space.s1 }}>
 				<span className="type-label" style={{ color: color.inkSecondary }}>
-					Figure to prove
+					Amount to prove
 				</span>
 				<span data-testid="selected-total" className="type-data-lg">
-					{runningSum.toString()} MIST
+					{usd(runningSum)}
 				</span>
 			</div>
 

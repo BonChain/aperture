@@ -2,7 +2,8 @@ import type { CSSProperties } from 'react';
 
 import { NoticeDisclaimer } from '../../shared/components/NoticeDisclaimer';
 import { StatusBadge } from '../../shared/components/StatusBadge';
-import { color, radius, space, typeClass } from '../../theme/tokens';
+import { color, glassStrong, radius, space, typeClass } from '../../theme/tokens';
+import { usd } from '../../shared/format';
 import type { DemoRequest } from './demoRequest';
 
 export interface VerifierRequestCardProps {
@@ -17,8 +18,7 @@ const cardStyle: CSSProperties = {
 	display: 'flex',
 	flexDirection: 'column',
 	gap: space.s4,
-	background: color.surfaceRaised,
-	border: `1px solid ${color.borderStrong}`,
+	...glassStrong,
 	borderRadius: radius.lg,
 	padding: `${space.s4} ${space.s5}`,
 };
@@ -76,10 +76,10 @@ export function VerifierRequestCard({
 			{/* 3. Required amount */}
 			<div style={{ display: 'flex', flexDirection: 'column', gap: space.s1 }}>
 				<span className={typeClass.label} style={{ color: color.inkSecondary }}>
-					Requested figure
+					Requested amount
 				</span>
 				<span className={typeClass.dataLg} style={{ color: color.inkPrimary }}>
-					{request.requiredAmount.toLocaleString()} MIST
+					{usd(request.requiredAmount)}
 				</span>
 			</div>
 
@@ -97,7 +97,7 @@ export function VerifierRequestCard({
 						<StatusBadge verdict="verified" label="Verified — request satisfied" />
 						{provedAmount !== undefined && (
 							<span className={typeClass.dataLg} style={{ color: color.inkPrimary }}>
-								{provedAmount.toLocaleString()} MIST
+								{usd(provedAmount)}
 							</span>
 						)}
 					</div>

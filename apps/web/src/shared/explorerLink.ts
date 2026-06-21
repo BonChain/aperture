@@ -6,8 +6,12 @@
 export type SuiNetwork = 'devnet' | 'testnet' | 'mainnet';
 
 export function explorerTxUrl(txDigest: string, network: SuiNetwork): string {
-	if (network === 'mainnet') {
-		return `https://suiexplorer.com/txblock/${txDigest}`;
-	}
-	return `https://suiexplorer.com/txblock/${txDigest}?network=${network}`;
+	// suiexplorer.com was retired by Mysten; Suiscan is the current explorer and
+	// supports devnet/testnet/mainnet under a uniform /<network>/tx/<digest> path.
+	return `https://suiscan.xyz/${network}/tx/${txDigest}`;
+}
+
+/** Suiscan page for an object/package (e.g. the deployed verifier module). */
+export function explorerObjectUrl(objectId: string, network: SuiNetwork): string {
+	return `https://suiscan.xyz/${network}/object/${objectId}`;
 }

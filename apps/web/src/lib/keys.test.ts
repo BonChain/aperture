@@ -1,7 +1,7 @@
 // keys.test.ts — determinism + length + bad-input tests for deriveSessionKey (Task 1, AC-2)
 import { describe, expect, it } from 'vitest';
 
-import { deriveSessionKey } from './keys';
+import { deriveSessionKey, randomSessionKey } from './keys';
 
 const FIXED_SIG = new Uint8Array(64).fill(42); // 64-byte dummy sig
 
@@ -42,6 +42,22 @@ describe('deriveSessionKey', () => {
 		const key = await deriveSessionKey(FIXED_SIG, 'auditor');
 		expect(() => (key as unknown as { toJSON(): unknown }).toJSON()).toThrow(
 			'SessionKey.toJSON is forbidden',
+		);
+	});
+});
+
+describe('randomSessionKey', () => {
+	it('returns a SessionKey with exactly 32 bytes', () => {
+		const key = randomSessionKey();
+		expect(key.bytes).toBeInstanceOf(Uint8Array);
+		expect(key.bytes.length).toBe(32);
+	});
+
+	it('produces a different key on each call (CSPRNG, not stable)', () => {
+		const k1 = randomSessionKey();
+		const k2 = randomSessionKey();
+		expect(Buffer.from(k1.bytes).toString('hex')).not.toBe(
+			Buffer.from(k2.bytes).toString('hex'),
 		);
 	});
 });

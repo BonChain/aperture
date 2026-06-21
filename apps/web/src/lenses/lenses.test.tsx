@@ -24,11 +24,12 @@ describe('HolderLens (AC-5, AC-6)', () => {
 		expect(cell).toHaveAttribute('data-cipher-state', 'revealed');
 	});
 
-	it('shows "Sign to unlock →" button when sessionKey is null', () => {
+	it('shows an enabled "Sign to unlock →" (Connect) action when sessionKey is null', () => {
 		render(<HolderLens sessionKey={null} />);
 		const btn = screen.getByRole('button', { name: 'Sign to unlock →' });
-		expect(btn).toBeDisabled();
-		expect(btn).toHaveAttribute('aria-disabled', 'true');
+		// Connect step is now a live action (wallet connect + sign), not decorative.
+		expect(btn).toBeEnabled();
+		expect(btn).toHaveAttribute('data-action', 'holder-sign-in');
 	});
 
 	it('shows the Mode B flow (SelectEntries) when sessionKey is provided', async () => {

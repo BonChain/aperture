@@ -25,3 +25,16 @@ export async function deriveSessionKey(sigBytes: Uint8Array, role: string): Prom
 	);
 	return makeSessionKey(new Uint8Array(bits));
 }
+
+/**
+ * Generate a fresh random 32-byte session key from a CSPRNG.
+ *
+ * Used as a fallback when a wallet cannot produce a stable personal-message
+ * signature (e.g. zkLogin / social-login accounts, where the signing key is
+ * ephemeral and rotates per epoch). A random per-session key is sufficient for
+ * the current flow: the key only seeds deterministic proof nonces — it is never
+ * persisted and the holder pk does not yet derive from it.
+ */
+export function randomSessionKey(): SessionKey {
+	return makeSessionKey(crypto.getRandomValues(new Uint8Array(32)));
+}

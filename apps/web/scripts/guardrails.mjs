@@ -23,7 +23,10 @@ const RULES = [
 	},
 	{
 		id: 'no-mysten-import',
-		appliesTo: () => true,
+		// shared/wallet/ is the allowed seam for @mysten/* (dapp-kit wallet adapter),
+		// mirroring the shared/adapters/ crypto seam (AR-15). Lenses and components
+		// must NOT import @mysten/* directly — they go through useWalletSession().
+		appliesTo: (path) => !path.replace(/\\/g, '/').includes('/shared/wallet/'),
 		test: (line) => /(?:from|import|require\()\s*['"]@mysten\//.test(line),
 		message: '@mysten/* import is banned from a lens/component (fixture-only, AR-15).',
 	},

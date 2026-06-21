@@ -1,9 +1,9 @@
 export const DEMO_REQUEST = {
 	requestId: 'demo-verifier-1',
 	requesterName: 'Acme Lender',
-	requiredAmount: 50_000n, // MIST
+	requiredAmount: 45_000n, // MIST under the hood; shown as $ in the demo story
 	message:
-		'Prove your selected total ≥ 50,000 MIST to proceed with your loan application.',
+		'Prove your selected total is at least $45,000 to proceed with your loan application.',
 } as const;
 
 export type DemoRequest = typeof DEMO_REQUEST;

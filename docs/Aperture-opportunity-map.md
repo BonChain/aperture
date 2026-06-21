@@ -19,7 +19,7 @@
 | 7 | **TRM Labs whitepaper (Feb 2026):** "The policy question is no longer privacy versus compliance" — it's which privacy regime + compliance model meets all stakeholders' needs. **Rejects anonymity, endorses selective disclosure.** | trmlabs.com (primary) | [EVIDENCED] — category endorsement, **not** a product endorsement |
 | 8 | TRM: for disclosed data to be **legally usable** it must be **tamper-evident (crypto signatures + append-only logs) with documented chain of custody.** | trmlabs.com | [EVIDENCED] — validates your **audit-trail-of-audit** as legal-grade |
 | 9 | TRM: **issuer-held / single-key escrow disclosure = concentration risk** ("issuer breach = all users exposed"); recommends threshold/MPC. | trmlabs.com | [EVIDENCED] — independent support for **"selective disclosure, not god-key"** |
-| 10 | **Aztec PrivPNL** = browser ZK "proof of private P&L," uses **recursive ZK ("Chonk")**. Proves the proof-of-figure category is real and demand-validated. | aztec.network (primary) | [EVIDENCED] that Aztec *uses* recursive ZK. **[BET]** that it "doesn't port to Sui" / that homomorphic is *superior* |
+| 10 | **Aztec PrivPNL** = browser ZK "proof of private P&L" — a **near-direct selected-sum analog to Mode B** (aggregates *chosen* encrypted DEX swaps into a net PnL, hides the rest, discloses via a tagging key). **BUT it is a community hackathon PoC** (single dev jp4g/Mach-34; repo `jp4g/aztec-pnl-proof`; 1★/0 forks/no releases; self-labeled *"not financial software"*) — **not an official Aztec Labs product, not shipped/live** (Aztec mainnet txns only enabled early 2026). | aztec-pnl-proof.vercel.app + repo (deep-research 2026-06-22, 3-vote) | [EVIDENCED] PrivPNL exists & does selected-sum. ⚠️ **Means "first ever selected-sum" is FALSE** — claim *"first **productized**, on **Sui**, over **confidential transfers**."* PrivPNL = demand proof, not a shipped rival. |
 | 11 | **Aleo** view-key spectrum: **AVK** reveals *all* account activity (broad god-key style); **TVK** decrypts *one* transaction. | aleo.org (primary) | [EVIDENCED] — the disclosure-granularity spectrum your Mode B differentiates against |
 
 ---
@@ -38,7 +38,7 @@
 
 ### C. Chain / ecosystem (Mysten & Sui) — **your primary audience**
 - **The strategic gap:** Mysten shipped a powerful privacy primitive that **breaks compliance tooling**, and the incumbents they invited (TRM, Merkle) are **still only exploring** — no one has shipped the compliance layer that institutional/stablecoin adoption needs. [EVIDENCED #4,#6]
-- **The wedge:** Aperture is the **first credible compliance/disclosure app on the primitive** — the missing piece between "cool privacy feature" and "stablecoin issuers can actually use it." [EVIDENCED for the gap; "first credible app" is a fair claim given no shipped competitor]
+- **The wedge:** Aperture is the **first *productized* compliance/disclosure app on Sui's confidential transfers** — the missing piece between "cool privacy feature" and "stablecoin issuers can actually use it." [EVIDENCED for the gap. ⚠️ Scope "first" to *productized / on Sui / over confidential transfers* — a selected-sum **proof-of-concept** (Aztec PrivPNL, see #10) already exists, so unqualified "first ever" is false.]
 - **The ask logic:** fund/partner with the category leader *now*, while it's devnet and the relationship is uncontested.
 
 ### D. End users / holders (Mode B)
@@ -59,8 +59,8 @@
 
 1. **Mysten shipped confidential transfers** — a category-defining privacy primitive (public beta, Jun 2026). [#4]
 2. **…but it breaks compliance** — the tooling that assumed readable amounts goes dark, and that's the **blocker to stablecoin/institutional adoption** Mysten actually wants. [#1,#2,#6]
-3. **The incumbents aren't there** — TRM and Merkle are *exploring*, not shipping; the compliance layer is **wide open**. [#6]
-4. **Aperture is the first credible one** — Mode A (designated, legal-grade disclosure) + Mode B (prove a figure, no god-key), built to the exact principles TRM itself published. [#7,#8,#9]
+3. **The incumbents aren't there** — TRM and Merkle are *exploring*, not shipping; **no productized compliance layer on Sui's confidential transfers exists yet**. [#6]
+4. **Aperture is the first credible *productized* one on Sui** — Mode A (designated, legal-grade disclosure) + Mode B (prove a figure, no key surrender), built to the exact principles TRM itself published. (A selected-sum *PoC* exists on Aztec — #10 — so say "productized / on Sui," not "first ever.") [#7,#8,#9]
 5. **Network effect → category lock-in** — become the default audit/disclosure layer; more issuers → auditors learn the format → it sets the standard.
 6. **The ask** — back the category leader now, intro to one confidential-token issuer, Mysten's eyes on the disclosure model.
 
@@ -112,6 +112,7 @@
 
 **Positioning bets — keep them as belief, not fact:**
 - "No incumbent has *any* working confidential-transfer compliance app" → say **"none shipped yet"** (absence of evidence).
+- **"First / only to do selective-sum disclosure"** → **FALSE as stated.** Aztec **PrivPNL** (community hackathon PoC, see #10) already proves a selected sum over chosen encrypted entries. Always qualify: **"first *productized*, on *Sui*, over *confidential transfers*."** Frame PrivPNL as demand validation, not a shipped competitor. And note the underlying primitive (aggregation-ZK / homomorphic sum) is **academically well-established — not novel**; the differentiation is product + chain + primitive, not the crypto.
 - Mode B homomorphic is *technically superior to* Aztec recursive-ZK / Aleo keys → **unverified**; claim *"lighter-weight, no recursive circuits,"* not *"better."*
 - Aztec's architecture "doesn't port to Sui" → **unverified**; soften to *"different chain, different primitives."*
 - TRM/Aleo **never name or endorse Aperture** — category-level support only. Don't imply endorsement.

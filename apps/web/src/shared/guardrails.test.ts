@@ -44,6 +44,14 @@ describe('lint zone — fails on a deliberate violation (Task 7)', () => {
 		expect(v.map((x) => x.id)).toContain('no-node-import');
 	});
 
+	it('allows @mysten import from the wallet seam (shared/wallet/)', () => {
+		const v = scanForViolations(
+			'src/shared/wallet/walletSession.tsx',
+			"import { useCurrentAccount } from '@mysten/dapp-kit';",
+		);
+		expect(v.map((x) => x.id)).not.toContain('no-mysten-import');
+	});
+
 	it('catches a hex color literal in a component but allows it in the theme layer', () => {
 		const comp = scanForViolations('src/shared/components/Bad.tsx', 'const c = "#0B0F1A";');
 		expect(comp.map((x) => x.id)).toContain('no-hex-in-component');
