@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-06-20
-last_updated: 2026-06-21 (Story 4.1 implemented and marked review)
+last_updated: 2026-06-21 (3.1+3.2+3.3+4.1+4.2+4.3+4.4 done — 229 tests green; 4.5 starting)
 project: Aperture
 project_key: NOKEY
 tracking_system: file-system
@@ -70,19 +70,19 @@ development_status:
 
   # Epic 3: Proof-of-Figure (Mode B) — GATED on SPIKE-1 (Story 1.2a) ✓ GATE PASSED
   epic-3: in-progress
-  3-1-select-entries-disclose-value: ready-for-dev
-  3-2-generate-aggregate-proof: ready-for-dev
-  3-3-verify-proof-without-secret-key: ready-for-dev
+  3-1-select-entries-disclose-value: done
+  3-2-generate-aggregate-proof: done
+  3-3-verify-proof-without-secret-key: done
   3-4-single-amount-fallback: backlog
   3-5-disclosure-receipt: backlog
   epic-3-retrospective: optional
 
   # Epic 4: Demo Narrative & Polish
   epic-4: in-progress
-  4-1-full-cross-role-switch-lens-polish: review
-  4-2-explorer-deep-links: ready-for-dev
-  4-3-global-state-accessibility-sweep: ready-for-dev
-  4-4-verifier-proof-request-demo-opening: ready-for-dev
+  4-1-full-cross-role-switch-lens-polish: done
+  4-2-explorer-deep-links: done
+  4-3-global-state-accessibility-sweep: done
+  4-4-verifier-proof-request-demo-opening: done
   4-5-one-command-demo-path-recorded-backup: ready-for-dev
   epic-4-retrospective: optional
 
