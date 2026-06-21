@@ -49,3 +49,12 @@ and the story in which they will be addressed.
 - **`publish-devnet.sh` uncommitted sources bypass idempotency** (`scripts/publish-devnet.sh`) — hash is `git rev-parse HEAD:move` (committed only); unstaged edits reuse stale package ID. Document "commit before publish" requirement in script header.
 - **`verify-pin.sh` SHA grep too loose** (`scripts/verify-pin.sh`) — `grep -qF "$SHA"` matches the SHA string anywhere in `.npmrc` (URLs, comments). Add a pattern that checks the SHA appears on a pin line, not just anywhere.
 - **`pin-assert` job duplicates `verify-pin.sh` call** (`.github/workflows/ci.yml`) — now that `move-build-test` calls `bash scripts/verify-pin.sh` directly, `pin-assert` is redundant. Remove duplicate or make `pin-assert` canonical with a `needs: [move-build-test]` guard.
+
+## Deferred from: code review of 1-0-ui-contract-signature-cell (2026-06-20)
+
+- `sprint-status.yaml` `last_updated` field uses freeform date+notes string instead of a parseable date scalar — pre-existing convention established before this story; no downstream tooling currently parses it as a typed date
+- `CipherCell` `revealing` state renders identically to `masked` with only `aria-busy=true` distinction; no visual progress indicator — instantaneous-swap transition is specified for 1.0; real revealing visual treatment (e.g. spinner or progress ring) comes with async crypto in Stories 2.3/4.1
+- `DataTable` empty `columns` array renders an empty `<thead>` with no accessible column scope — stub frame only; real column validation comes with data binding in later stories
+- `RoleSwitcher` `defaultRole` prop changes after mount are silently ignored (uncontrolled `useState` pattern) — fixture-only stub; no external controlled switching needed until lens routing is wired in later stories
+- `tokens.ts` `roleAccent()` called with a non-typed string from JS interop returns undefined CSS vars (`var(--role-undefined)`) — TypeScript union prevents this at compile time; no JS interop exists in this story's scope
+- `AuditLogRow` `chained=true` with undefined `children` renders a row with only the chain-marker glyph and no content text — stub frame; fixture always provides children; real validation comes with audit-log data binding in Story 2.2
