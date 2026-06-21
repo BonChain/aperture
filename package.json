@@ -23,7 +23,8 @@
     "format:move:check": "prettier-move -c 'move/sources/**/*.move' 'move/tests/**/*.move'",
     "capture:golden": "./scripts/capture-move-golden.sh",
     "verify:pin": "./scripts/verify-pin.sh",
-    "demo": "pnpm pretest:devnet && pnpm publish:devnet && pnpm --filter @aperture/web dev"
+    "demo": "pnpm --filter @aperture/web dev",
+    "demo:onchain": "pnpm pretest:devnet && pnpm publish:devnet && pnpm --filter @aperture/web dev"
   },
   "devDependencies": {
     "tsx": "^4.22.4",

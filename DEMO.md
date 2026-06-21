@@ -7,14 +7,10 @@
 ## Prerequisites
 
 - **Node 20+** and **pnpm 11.8.0**
-- **`sui` CLI** on PATH at devnet-compatible version:
-  ```bash
-  suiup install sui@devnet-1.73.0
-  suiup default set sui@devnet-1.73.0
-  ```
-- **Active keystore** with ≥ 1 SUI on devnet. The `pretest:devnet` script tops up via faucet if balance < 0.5 SUI, but requires an existing active address.
-- **WSL2 / Linux** for any `build:wasm` steps (AR-3). The `pnpm demo` command does not rebuild WASM — build artifacts must already exist.
-- **Known limitation:** `publish:devnet` only tracks committed Move sources. Commit any Move changes before running `pnpm demo`.
+
+For on-chain verify (optional):
+- **`sui` CLI** on PATH (`suiup install sui@devnet-1.73.0`)
+- **Active keystore** with ≥ 1 SUI on devnet (faucet tops up automatically)
 
 ---
 
@@ -24,13 +20,15 @@
 pnpm demo
 ```
 
-This chains three idempotent steps:
+Starts the app at http://localhost:5173. Wallet connection is mocked — no real wallet required. Proof generation is fully in-browser.
 
-1. `pnpm pretest:devnet` — confirms devnet is live, tops up faucet if balance < 0.5 SUI.
-2. `pnpm publish:devnet` — reuses cached package ID if Move sources are unchanged; republishes if stale.
-3. `pnpm --filter @aperture/web dev` — starts the app at http://localhost:5173.
+For the full on-chain verify path (requires `sui` CLI + devnet gas):
 
-Full chain completes < 5 min.
+```bash
+pnpm demo:onchain
+```
+
+This chains: `pretest:devnet` → `publish:devnet` → web dev server.
 
 ---
 
