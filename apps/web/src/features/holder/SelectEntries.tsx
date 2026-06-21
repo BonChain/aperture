@@ -1,0 +1,168 @@
+import React from 'react';
+
+import { NoticeDisclaimer } from '../../shared/components/NoticeDisclaimer';
+import { color, space } from '../../theme/tokens';
+
+// ---------------------------------------------------------------------------
+// Fixture data — values match the SPIKE-1 aggregate round-trip constants.
+// Story 3.2 will consume these same ids/amounts; do not rename them.
+// ---------------------------------------------------------------------------
+
+export interface MockEntry {
+	id: string;
+	label: string;
+	amount: bigint;
+}
+
+const FIXTURE_ENTRIES: readonly MockEntry[] = [
+	{ id: 'entry-a', label: 'Salary — June', amount: 40000n },
+	{ id: 'entry-b', label: 'Consulting — Q2', amount: 30000n },
+	{ id: 'entry-c', label: 'Bonus — H1', amount: 8000n },
+	{ id: 'entry-d', label: 'Reimbursement', amount: 500n },
+] as const;
+
+// AR-11: client-side guard at selection time.
+const LIMB0_MAX = 65535n;
+
+function canAdd(runningSum: bigint, entryAmount: bigint): boolean {
+	return runningSum + entryAmount <= LIMB0_MAX;
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+export interface SelectEntriesProps {
+	onSelectionChange?: (selectedIds: string[]) => void;
+}
+
+export function SelectEntries({ onSelectionChange }: SelectEntriesProps) {
+	const [selected, setSelected] = React.useState<Set<string>>(new Set());
+
+	const runningSum = FIXTURE_ENTRIES.filter((e) => selected.has(e.id)).reduce(
+		(acc, e) => acc + e.amount,
+		0n,
+	);
+
+	function toggle(id: string) {
+		setSelected((prev) => {
+			const next = new Set(prev);
+			if (next.has(id)) {
+				next.delete(id);
+			} else {
+				next.add(id);
+			}
+			onSelectionChange?.([...next]);
+			return next;
+		});
+	}
+
+	const selectedCount = selected.size;
+	const totalCount = FIXTURE_ENTRIES.length;
+
+	return (
+		<div style={{ display: 'flex', flexDirection: 'column', gap: space.s4 }}>
+			{/* Scope label — AC-4 DOM check */}
+			<p className="type-label" style={{ color: color.inkSecondary }}>
+				{totalCount} entries in scope
+			</p>
+
+			{/* Entry checklist */}
+			<ul
+				style={{
+					listStyle: 'none',
+					padding: 0,
+					margin: 0,
+					display: 'flex',
+					flexDirection: 'column',
+					gap: space.s2,
+				}}
+			>
+				{FIXTURE_ENTRIES.map((entry) => {
+					const isChecked = selected.has(entry.id);
+					const wouldExceed = !isChecked && !canAdd(runningSum, entry.amount);
+					return (
+						<li
+							key={entry.id}
+							style={{
+								display: 'flex',
+								flexDirection: 'column',
+								gap: space.s1,
+								padding: `${space.s2} ${space.s3}`,
+								background: color.surfaceRaised,
+								borderRadius: 'var(--radius-sm)',
+							}}
+						>
+							<label
+								style={{
+									display: 'flex',
+									alignItems: 'center',
+									gap: space.s3,
+									cursor: wouldExceed ? 'not-allowed' : 'pointer',
+									opacity: wouldExceed ? 0.5 : 1,
+								}}
+							>
+								<input
+									type="checkbox"
+									checked={isChecked}
+									disabled={wouldExceed}
+									onChange={() => toggle(entry.id)}
+									title={
+										wouldExceed
+											? 'Adding this entry exceeds what can be proven in one figure. Prove a smaller selection.'
+											: undefined
+									}
+								/>
+								<span className="type-body" style={{ flex: 1 }}>
+									{entry.label}
+								</span>
+								<span className="type-data" style={{ color: color.inkSecondary }}>
+									{entry.amount.toString()} MIST
+								</span>
+							</label>
+							{wouldExceed && (
+								<p
+									className="type-caption"
+									style={{
+										color: color.notice,
+										margin: 0,
+										paddingLeft: 'calc(16px + var(--space-3))',
+									}}
+								>
+									Adding this entry exceeds what can be proven in one figure. Prove a smaller
+									selection.
+								</p>
+							)}
+						</li>
+					);
+				})}
+			</ul>
+
+			{/* Selection summary */}
+			<div style={{ display: 'flex', alignItems: 'baseline', gap: space.s3 }}>
+				<span
+					data-testid="entry-count"
+					className="type-label"
+					style={{ color: color.inkSecondary }}
+				>
+					{selectedCount} of {totalCount} entries selected
+				</span>
+			</div>
+
+			{/* Running selected-sum — AC-1, UX-DR14 */}
+			<div style={{ display: 'flex', flexDirection: 'column', gap: space.s1 }}>
+				<span className="type-label" style={{ color: color.inkSecondary }}>
+					Figure to prove
+				</span>
+				<span data-testid="selected-total" className="type-data-lg">
+					{runningSum.toString()} MIST
+				</span>
+			</div>
+
+			{/* Scoped-claim disclaimer — AC-4, verbatim (snapshot-locked) */}
+			<NoticeDisclaimer>
+				Proves a selected sum — not total income, nor which entries were included.
+			</NoticeDisclaimer>
+		</div>
+	);
+}

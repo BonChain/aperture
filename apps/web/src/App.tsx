@@ -1,129 +1,134 @@
-import type { CSSProperties, ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 
-import { color, space } from './theme/tokens';
+import type { SessionKey } from '@aperture/core/proof';
+
+import { deriveSessionKey } from './lib/keys';
+import { AuditorLens, HolderLens, PayerLens } from './lenses';
 import { RoleSwitcher } from './shared/RoleSwitcher';
-import {
-	AuditLogRow,
-	ButtonPrimary,
-	ButtonRole,
-	CipherCell,
-	DataTable,
-	DisclosureReceiptCard,
-	EmptyState,
-	ErrorCard,
-	NoticeDisclaimer,
-	SkeletonLoader,
-	StatusBadge,
-} from './shared/components';
-import {
-	ADDRESS_FIXTURE,
-	AMOUNT_FIXTURES,
-	AUDIT_ENTRIES_FIXTURE,
-	HOLDER_PUBKEY_FIXTURE,
-	PROOF_BLOB_FIXTURE,
-	SIGNATURE_CIPHER,
-} from './shared/fixtures';
+import { NoticeDisclaimer } from './shared/components/NoticeDisclaimer';
+import type { Role } from './theme/tokens';
+import { space } from './theme/tokens';
 
-const section: CSSProperties = { display: 'flex', flexDirection: 'column', gap: space.s4 };
-const sectionTitle: CSSProperties = { color: color.inkSecondary };
+/**
+ * Session key cache — one key per role per browser session.
+ * Never written to storage; closing the tab clears all keys (AC-2, D3).
+ */
+type SessionKeys = Partial<Record<Role, SessionKey>>;
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
-	return (
-		<section style={section}>
-			<h2 className="type-label" style={sectionTitle}>
-				{title}
-			</h2>
-			{children}
-		</section>
-	);
+/** Routes the active role to its lens component (AC-1). */
+function LensContent({
+	role,
+	sessionKey,
+}: {
+	role: Role;
+	sessionKey: SessionKey | null;
+}) {
+	if (role === 'holder') return <HolderLens sessionKey={sessionKey} />;
+	if (role === 'payer') return <PayerLens />;
+	return <AuditorLens />;
+}
+
+export interface AppProps {
+	/**
+	 * Optional: inject the current wallet address from outside for testing or
+	 * future wallet-adapter wiring. When this changes mid-session after a key
+	 * has been derived, the wallet-binding guard fires (AC-3).
+	 *
+	 * TODO Story 4.5: replace with real wallet adapter hook.
+	 */
+	connectedWalletAddress?: string;
 }
 
 /**
- * Fixture-only contract surface (Story 1.0). The app boots on the Role-switcher
- * shell (Mode B Holder front door), then exhibits every contract component against
- * fixtures. No lens wires to real data; no `@mysten/*` / `core/crypto` is touched.
+ * App root (Story 4.1 — Full Cross-Role Switch & Lens Polish).
+ *
+ * Wires:
+ * - RoleSwitcher → lens router (AC-1, AC-4)
+ * - Lazy signing on first role entry (AC-2) — DEMO-STUB until Story 4.5
+ * - Session-key cache per role, never persisted (AC-2, D3)
+ * - Wallet-binding guard (AC-3)
+ * - Front door boots on Holder (AC-4, UX-DR23)
  */
-export default function App() {
+export default function App({ connectedWalletAddress }: AppProps = {}) {
+	// Lens router state — boots on Holder (AC-4, UX-DR23).
+	const [activeRole, setActiveRole] = useState<Role>('holder');
+
+	// Session keys: derived on first role visit, cached in memory (AC-2).
+	const [sessionKeys, setSessionKeys] = useState<SessionKeys>({});
+
+	// Wallet-binding guard state (AC-3).
+	const [boundWalletAddress, setBoundWalletAddress] = useState<string | null>(null);
+	const [walletSwitched, setWalletSwitched] = useState(false);
+
+	// Detect wallet changes mid-session (AC-3).
+	useEffect(() => {
+		if (connectedWalletAddress === undefined) return;
+		if (boundWalletAddress === null) return;
+		if (connectedWalletAddress !== boundWalletAddress) {
+			setWalletSwitched(true);
+		} else {
+			setWalletSwitched(false);
+		}
+	}, [connectedWalletAddress, boundWalletAddress]);
+
+	// Trigger lazy sign for the initial default role (holder) on mount (AC-4, UX-DR23).
+	// Without this, the Holder lens stays in the "Sign to unlock →" state until
+	// the user clicks a different role and back — which is wrong for the front door UX.
+	useEffect(() => {
+		handleRoleChange('holder');
+		// Only run once on mount — exhaustive-deps is intentionally suppressed here
+		// because re-running on every render would re-derive the key unnecessarily.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	async function handleRoleChange(role: Role) {
+		setActiveRole(role);
+
+		if (sessionKeys[role]) {
+			// Session cache hit — no re-sign needed (AC-2).
+			return;
+		}
+
+		// DEMO-STUB: replace with real signPersonalMessage in Story 4.5.
+		// Message contract (AR-8/D3): "Aperture: derive {Role} session key"
+		// const signMessage = `Aperture: derive ${ROLE_NAMES[role]} session key`;
+		// Deterministic per-role stub bytes so tests can verify key isolation.
+		const stubSigBytes = new Uint8Array(64).fill(role === 'holder' ? 1 : role === 'payer' ? 2 : 3);
+
+		try {
+			const key = await deriveSessionKey(stubSigBytes, role);
+			setSessionKeys((prev) => ({ ...prev, [role]: key }));
+
+			// Bind the wallet address on first successful signature (AC-3).
+			if (boundWalletAddress === null) {
+				// DEMO-STUB: use a placeholder address until real wallet adapter lands in Story 4.5.
+				const address = connectedWalletAddress ?? '0xdemo-wallet-address';
+				setBoundWalletAddress(address);
+			}
+		} catch {
+			// Sign failed or was cancelled — leave sessionKeys[role] unset (AC-6).
+			// TODO Story 4.5: revert activeRole to the previous role on cancel.
+		}
+	}
+
+	// Effective session key: null when wallet has switched mid-session (AC-3).
+	const effectiveKey = walletSwitched ? null : (sessionKeys[activeRole] ?? null);
+
 	return (
-		<RoleSwitcher>
-			<div style={{ display: 'flex', flexDirection: 'column', gap: space.s10 }}>
-				<h1 className="type-display">UI Contract — fixture exhibit</h1>
-
-				<Section title="Buttons">
-					<div style={{ display: 'flex', gap: space.s3 }}>
-						<ButtonPrimary>Verify</ButtonPrimary>
-						<ButtonPrimary variant="secondary">Export</ButtonPrimary>
-						<ButtonRole role="holder">Generate proof</ButtonRole>
-					</div>
-				</Section>
-
-				<Section title="Cipher cell — the signature (same cipherId, two states)">
-					<div style={{ display: 'flex', gap: space.s10 }}>
-						<CipherCell cipherId={SIGNATURE_CIPHER.cipherId} value={SIGNATURE_CIPHER.value} />
-						<CipherCell
-							cipherId={SIGNATURE_CIPHER.cipherId}
-							value={SIGNATURE_CIPHER.value}
-							state="revealed"
-						/>
-					</div>
-				</Section>
-
-				<Section title="Status badges">
-					<div style={{ display: 'flex', gap: space.s3 }}>
-						<StatusBadge verdict="verified" />
-						<StatusBadge verdict="failed" label="Doesn't verify" />
-					</div>
-				</Section>
-
-				<Section title="Notice / disclaimer">
+		<RoleSwitcher defaultRole="holder" onRoleChange={handleRoleChange}>
+			<div
+				data-testid="app-lens-content"
+				style={{ display: 'flex', flexDirection: 'column', gap: space.s4 }}
+			>
+				{/* Wallet-binding warning (AC-3). */}
+				{walletSwitched && (
 					<NoticeDisclaimer>
-						Proves a selected sum — not total income, nor which entries were included.
+						Switching wallets mid-session breaks proof verification. Reconnect with the original
+						wallet.
 					</NoticeDisclaimer>
-				</Section>
+				)}
 
-				<Section title="Data table (frame)">
-					<DataTable columns={['Recipient', 'Amount', 'Status']}>
-						{AMOUNT_FIXTURES.map((c, i) => (
-							<tr key={c.cipherId}>
-								<td className="type-data" style={{ padding: `${space.rowY} ${space.s4}` }}>
-									{ADDRESS_FIXTURE.slice(0, 10)}…
-								</td>
-								<td style={{ padding: `${space.rowY} ${space.s4}`, textAlign: 'right' }}>
-									<CipherCell cipherId={c.cipherId} value={c.value} state={i === 2 ? 'revealed' : 'masked'} />
-								</td>
-								<td style={{ padding: `${space.rowY} ${space.s4}` }}>
-									<StatusBadge verdict="verified" label="Registered" />
-								</td>
-							</tr>
-						))}
-					</DataTable>
-				</Section>
-
-				<Section title="Audit log (frame — append-only, no edit/delete)">
-					<div>
-						{AUDIT_ENTRIES_FIXTURE.map((e) => (
-							<AuditLogRow key={e.seq} chained={!e.genesis}>
-								{e.actor} · {e.action} · {e.at}
-							</AuditLogRow>
-						))}
-					</div>
-				</Section>
-
-				<Section title="Disclosure receipt (frame)">
-					<DisclosureReceiptCard
-						holder={HOLDER_PUBKEY_FIXTURE}
-						disclosed="3,000.00 USDC"
-						includedCount="3 entries included"
-						proofBlob={PROOF_BLOB_FIXTURE}
-						result={<StatusBadge verdict="verified" />}
-					/>
-				</Section>
-
-				<Section title="State primitives">
-					<SkeletonLoader />
-					<ErrorCard>Couldn't reach the network. Try again.</ErrorCard>
-					<EmptyState title="No recipients yet.">Add up to 7 to start a payment run.</EmptyState>
-				</Section>
+				<LensContent role={activeRole} sessionKey={effectiveKey} />
 			</div>
 		</RoleSwitcher>
 	);

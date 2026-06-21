@@ -17,7 +17,12 @@
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"noEmit": true,
-		"types": ["vitest/globals", "@testing-library/jest-dom"]
+		"types": ["vitest/globals", "@testing-library/jest-dom"],
+		"paths": {
+			"@aperture/core": ["../../packages/core/src/index.ts"],
+			"@aperture/core/proof": ["../../packages/core/src/proof/proofAdapter.ts"],
+			"@aperture/core/crypto": ["../../packages/core/src/crypto/index.ts"]
+		}
 	},
 	"include": ["src", "vite.config.ts"]
 }

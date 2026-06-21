@@ -1,8 +1,19 @@
+import { resolve } from 'node:path';
 import react from '@vitejs/plugin-react-swc';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
 	plugins: [react()],
+	resolve: {
+		alias: {
+			// Map @aperture/core sub-paths to the workspace package source.
+			// Vite/vitest can't traverse pnpm workspace links for sub-path imports,
+			// so we alias them explicitly here. Add new sub-paths as needed.
+			'@aperture/core/proof': resolve(__dirname, '../../packages/core/src/proof/proofAdapter.ts'),
+			'@aperture/core/crypto': resolve(__dirname, '../../packages/core/src/crypto/index.ts'),
+			'@aperture/core': resolve(__dirname, '../../packages/core/src/index.ts'),
+		},
+	},
 	// The fastcrypto WASM bindings (`@contra/bulletproofs-wasm`, pulled in by
 	// ts-sdk in later stories) ship a modern wasm-pack `web` build. Bump the
 	// target past Vite's default so its output passes through instead of
