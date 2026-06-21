@@ -127,6 +127,32 @@ const MODEL: readonly ModelItem[] = [
 	{ tag: 'Usage-based', body: 'Per-disclosure / per-proof pricing scales income with regulatory activity, alongside reporting and integration add-ons.' },
 ];
 
+interface RoadmapItem {
+	phase: string;
+	when: string;
+	body: string;
+}
+const ROADMAP: readonly RoadmapItem[] = [
+	{
+		phase: 'Now',
+		when: 'Devnet PoC',
+		body:
+			'Mode B (Proof-of-Figure) runs end to end — generate a 128-byte proof and verify it in the browser, with on-chain verification on live devnet. Mode A (Auditor Console) is designed.',
+	},
+	{
+		phase: 'Next',
+		when: 'Testnet',
+		body:
+			'Harden the proof layer, land the first design-partner issuer, and ship the Travel-Rule disclosure flow.',
+	},
+	{
+		phase: 'Then',
+		when: 'Mainnet',
+		body:
+			'Open-core launch — become the default audit & disclosure layer that confidential tokens on Sui reach for.',
+	},
+];
+
 // ---------------------------------------------------------------------------
 // Primitives
 // ---------------------------------------------------------------------------
@@ -375,6 +401,38 @@ export function Landing({ onEnter }: LandingProps) {
 					<span className="type-caption" style={{ color: color.inkDisabled }}>
 						Open-core compliance infrastructure — the issuer is the customer; the holder demo shows the
 						capability.
+					</span>
+				</Section>
+
+				{/* Where this is going — roadmap (forward-looking, not shipped capability) */}
+				<Section id="roadmap">
+					<Eyebrow>Where this is going</Eyebrow>
+					<div style={grid}>
+						{ROADMAP.map((r) => (
+							<div key={r.phase} style={cardStyle}>
+								<div
+									style={{
+										display: 'flex',
+										alignItems: 'baseline',
+										justifyContent: 'space-between',
+										gap: space.s3,
+									}}
+								>
+									<span className="type-label" style={{ color: color.cipherReveal }}>
+										{r.phase}
+									</span>
+									<span className="type-label" style={{ color: color.inkSecondary }}>
+										{r.when}
+									</span>
+								</div>
+								<p className="type-caption" style={{ margin: 0, color: color.inkSecondary, lineHeight: 1.5 }}>
+									{r.body}
+								</p>
+							</div>
+						))}
+					</div>
+					<span className="type-caption" style={{ color: color.inkDisabled }}>
+						Roadmap, not shipped capability — today's build runs the <strong>Now</strong> column.
 					</span>
 				</Section>
 

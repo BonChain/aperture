@@ -17,6 +17,7 @@ const NAV: readonly { label: string; id: string }[] = [
 	{ label: 'How it works', id: 'how' },
 	{ label: 'Why Sui', id: 'why-sui' },
 	{ label: 'Use cases', id: 'use-cases' },
+	{ label: 'Roadmap', id: 'roadmap' },
 ];
 
 function scrollTo(id: string) {
