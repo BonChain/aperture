@@ -120,6 +120,9 @@ export default function App({ connectedWalletAddress }: AppProps = {}) {
 				data-testid="app-lens-content"
 				style={{ display: 'flex', flexDirection: 'column', gap: space.s4 }}
 			>
+				{/* Non-production disclaimer — always visible (NFR-8, AC-4). */}
+				<NoticeDisclaimer>Demo keypairs — not for production use</NoticeDisclaimer>
+
 				{/* Wallet-binding warning (AC-3). */}
 				{walletSwitched && (
 					<NoticeDisclaimer>

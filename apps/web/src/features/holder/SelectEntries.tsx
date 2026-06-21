@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { EmptyState } from '../../shared/components/StatePrimitives';
 import { NoticeDisclaimer } from '../../shared/components/NoticeDisclaimer';
 import { color, space } from '../../theme/tokens';
 
@@ -14,7 +15,7 @@ export interface MockEntry {
 	amount: bigint;
 }
 
-const FIXTURE_ENTRIES: readonly MockEntry[] = [
+export const FIXTURE_ENTRIES: readonly MockEntry[] = [
 	{ id: 'entry-a', label: 'Salary — June', amount: 40000n },
 	{ id: 'entry-b', label: 'Consulting — Q2', amount: 30000n },
 	{ id: 'entry-c', label: 'Bonus — H1', amount: 8000n },
@@ -34,12 +35,14 @@ function canAdd(runningSum: bigint, entryAmount: bigint): boolean {
 
 export interface SelectEntriesProps {
 	onSelectionChange?: (selectedIds: string[]) => void;
+	/** Override the entry list; defaults to FIXTURE_ENTRIES. Pass [] to test the empty-entries state. */
+	entries?: readonly MockEntry[];
 }
 
-export function SelectEntries({ onSelectionChange }: SelectEntriesProps) {
+export function SelectEntries({ onSelectionChange, entries = FIXTURE_ENTRIES }: SelectEntriesProps) {
 	const [selected, setSelected] = React.useState<Set<string>>(new Set());
 
-	const runningSum = FIXTURE_ENTRIES.filter((e) => selected.has(e.id)).reduce(
+	const runningSum = entries.filter((e) => selected.has(e.id)).reduce(
 		(acc, e) => acc + e.amount,
 		0n,
 	);
@@ -58,7 +61,14 @@ export function SelectEntries({ onSelectionChange }: SelectEntriesProps) {
 	}
 
 	const selectedCount = selected.size;
-	const totalCount = FIXTURE_ENTRIES.length;
+	const totalCount = entries.length;
+
+	// empty-entries state — no entries loaded (DR20).
+	if (totalCount === 0) {
+		return (
+			<EmptyState title="No encrypted entries yet. Connect your wallet to see entries." />
+		);
+	}
 
 	return (
 		<div style={{ display: 'flex', flexDirection: 'column', gap: space.s4 }}>
@@ -78,7 +88,7 @@ export function SelectEntries({ onSelectionChange }: SelectEntriesProps) {
 					gap: space.s2,
 				}}
 			>
-				{FIXTURE_ENTRIES.map((entry) => {
+				{entries.map((entry) => {
 					const isChecked = selected.has(entry.id);
 					const wouldExceed = !isChecked && !canAdd(runningSum, entry.amount);
 					return (

@@ -41,7 +41,7 @@ type State =
   | { phase: 'idle' }
   | { phase: 'generating'; startMs: number; elapsedS: string }
   | { phase: 'done'; result: GenerateProofResult; elapsedS: string }
-  | { phase: 'error'; message: string };
+  | { phase: 'error'; message: string; networkError?: boolean };
 
 export function ProofGenerator({
   selectedIds,
@@ -115,7 +115,11 @@ export function ProofGenerator({
         intervalRef.current = null;
       }
       const message = err instanceof Error ? err.message : String(err);
-      setState({ phase: 'error', message });
+      // Detect network/devnet failures for the mode-b-unavailable state (DR20).
+      const networkError =
+        err instanceof TypeError ||
+        (typeof message === 'string' && /fetch|network|connect|unreachable/i.test(message));
+      setState({ phase: 'error', message, networkError });
     }
   }
 
@@ -172,7 +176,38 @@ export function ProofGenerator({
       )}
 
       {state.phase === 'error' && (
-        <ErrorCard title="Proof generation failed">{state.message}</ErrorCard>
+        state.networkError ? (
+          <ErrorCard
+            title="Mode B unavailable"
+            action={
+              <ButtonPrimary
+                variant="secondary"
+                onClick={() => setState({ phase: 'idle' })}
+                data-action="retry"
+              >
+                Retry
+              </ButtonPrimary>
+            }
+          >
+            Mode B is currently unavailable. The demo keypairs are loaded and ready — reconnect to
+            continue.
+          </ErrorCard>
+        ) : (
+          <ErrorCard
+            title="Proof generation failed"
+            action={
+              <ButtonPrimary
+                variant="secondary"
+                onClick={() => setState({ phase: 'idle' })}
+                data-action="retry"
+              >
+                Retry
+              </ButtonPrimary>
+            }
+          >
+            {state.message}
+          </ErrorCard>
+        )
       )}
     </div>
   );
