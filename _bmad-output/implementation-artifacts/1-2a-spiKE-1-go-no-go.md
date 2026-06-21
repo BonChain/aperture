@@ -1,6 +1,6 @@
 ---
 story_track: 1-2a
-status: in-progress
+status: done
 decision: GO
 decided_at: 2026-06-20
 network: devnet
