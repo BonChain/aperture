@@ -1,9 +1,25 @@
 // packages/core/src/crypto/elgamal.test.ts
 //
 // Story 3.2 Task 2: roundtrip test for the extracted elgamalProve + verifyElGamal.
+// Story 3.3 Task 2: off-chain verify against committed golden fixtures.
 
+import { readFileSync } from "node:fs";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, it, expect } from "vitest";
 import { ristretto255 } from "@noble/curves/ed25519.js";
+
+const __testDir = dirname(fileURLToPath(import.meta.url));
+const FIXTURES_DIR = resolve(__testDir, "../../../spike/test/fixtures");
+
+function loadHex(relPath: string): Uint8Array {
+  const text = readFileSync(resolve(FIXTURES_DIR, relPath), "utf8").trim();
+  const bytes = new Uint8Array(text.length / 2);
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(text.slice(i * 2, i * 2 + 2), 16);
+  }
+  return bytes;
+}
 
 import {
   G,
@@ -108,5 +124,65 @@ describe("elgamalProve + verifyElGamal (packages/core/crypto/elgamal)", () => {
     const pk = ristretto255.Point.fromHex(bytesToHex(G().toBytes())).multiply(AGG_SK);
     const pk2 = G().multiply(AGG_SK);
     expect(pk.equals(pk2)).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Story 3.3 Task 2: off-chain verify against committed golden fixtures
+// ---------------------------------------------------------------------------
+
+describe("verifyElGamal against committed golden fixtures (Story 3.3)", () => {
+  // Aggregate statement: AGG_SK=12345, EntryA=(40000/11111), EntryB=(30000/22222)
+  // DST = empty Uint8Array (same as all SPIKE-1 tests)
+  function buildAggStatement() {
+    const Gp = G();
+    const Hp = H();
+    const pk = Gp.multiply(AGG_SK);
+    const c1A = Gp.multiply(ENTRY_A_BLINDING).add(Hp.multiply(ENTRY_A_AMOUNT));
+    const dhA = pk.multiply(ENTRY_A_BLINDING);
+    const c1B = Gp.multiply(ENTRY_B_BLINDING).add(Hp.multiply(ENTRY_B_AMOUNT));
+    const dhB = pk.multiply(ENTRY_B_BLINDING);
+    return { pk, c1: c1A.add(c1B), dh: dhA.add(dhB) };
+  }
+
+  // Single-amount statement: SK=12345, amount=42, blinding=67890
+  function buildSingleStatement() {
+    const TEST_SK = 12345n;
+    const TEST_AMOUNT = 42n;
+    const TEST_BLINDING = 67890n;
+    const Gp = G();
+    const Hp = H();
+    const pk = Gp.multiply(TEST_SK);
+    const c1 = Gp.multiply(TEST_BLINDING).add(Hp.multiply(TEST_AMOUNT));
+    const dh = pk.multiply(TEST_BLINDING);
+    return { pk, c1, dh };
+  }
+
+  it("proofAggregateValid.hex verifies off-chain → true", () => {
+    const { pk, c1, dh } = buildAggStatement();
+    const proof = loadHex("proofAggregateValid.hex");
+    expect(proof.length).toBe(128);
+    expect(verifyElGamal(new Uint8Array(0), pk, c1, dh, proof)).toBe(true);
+  });
+
+  it("proofAggregateTampered.hex fails off-chain → false", () => {
+    const { pk, c1, dh } = buildAggStatement();
+    const proof = loadHex("proofAggregateTampered.hex");
+    expect(proof.length).toBe(128);
+    expect(verifyElGamal(new Uint8Array(0), pk, c1, dh, proof)).toBe(false);
+  });
+
+  it("proofValid.hex (single-amount baseline) verifies off-chain → true", () => {
+    const { pk, c1, dh } = buildSingleStatement();
+    const proof = loadHex("proofValid.hex");
+    expect(proof.length).toBe(128);
+    expect(verifyElGamal(new Uint8Array(0), pk, c1, dh, proof)).toBe(true);
+  });
+
+  it("proofTampered.hex (single-amount baseline) fails off-chain → false", () => {
+    const { pk, c1, dh } = buildSingleStatement();
+    const proof = loadHex("proofTampered.hex");
+    expect(proof.length).toBe(128);
+    expect(verifyElGamal(new Uint8Array(0), pk, c1, dh, proof)).toBe(false);
   });
 });

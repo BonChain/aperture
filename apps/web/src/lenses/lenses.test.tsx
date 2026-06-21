@@ -81,9 +81,9 @@ describe('AuditorLens (AC-5)', () => {
 		expect(cell).toHaveAttribute('data-cipher-state', 'masked');
 	});
 
-	it('shows the coming-soon stub text', () => {
+	it('shows the privacy disclaimer (Story 3.3: stub replaced by VerifyProof)', () => {
 		render(<AuditorLens />);
-		expect(screen.getByRole('note')).toHaveTextContent('Auditor console — coming soon.');
+		expect(screen.getByRole('note')).toHaveTextContent('secret key never leaves the holder');
 	});
 
 	it('uses the same SIGNATURE_CIPHER.cipherId across all three lenses (identity invariant, AC-5)', () => {

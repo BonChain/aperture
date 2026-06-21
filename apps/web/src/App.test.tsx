@@ -63,14 +63,14 @@ describe('App lens switching (AC-1)', () => {
 		});
 	});
 
-	it('shows Auditor coming-soon stub text in Auditor lens', async () => {
+	it('shows Auditor lens with VerifyProof panel (Story 3.3)', async () => {
 		const user = userEvent.setup();
 		render(<App />);
 
 		await user.click(screen.getByRole('button', { name: 'Auditor' }));
 
 		await waitFor(() => {
-			expect(screen.getByText('Auditor console — coming soon.')).toBeInTheDocument();
+			expect(screen.getByTestId('verify-proof')).toBeInTheDocument();
 		});
 	});
 });
