@@ -83,7 +83,7 @@ NFR-10: Tech baseline — Node 20+, TS strict; Move builds with pinned toolchain
 - AR-3: **Toolchain traps documented & guarded:** wasm re-pack on `file:` sdk dep; bulletproofs `wasmUrl` resolves at runtime (copy `pkg/*.wasm` to `public/`); dlog table transferred via transferable/SharedArrayBuffer (never postMessage whole); `Move.toml rev` == submodule hash; run `build:wasm` in WSL2/container on Windows.
 
 **Spike gates (do FIRST, before dependent features):**
-- AR-4: **SPIKE-1** (gates ALL Mode B build, Epic 3) — prove the `Ciphertext.add → ElGamalNizk → nizk::verify_elgamal` round-trip. **PASS requires ALL:** (1) off-chain SDK verify true for correct X; (2) on-chain `verify_elgamal` success for the same proof; (3) wrong X → false (both paths); (4) tampered ciphertext → false; (5) measured & recorded client-side proof-gen time, proof size, on-chain verify gas. **#1 blocker = Fiat-Shamir transcript byte-parity** (wasm prover vs Move verifier): write an interop vector test first. Idempotent on-chain `pretest` fixture: localnet validator, Move package published + id written to SDK config, funded address, dlog-table-needed question resolved. Owner + due date + timebox required. On miss → FR-18 single-amount (if it passes) or recorded clip + live Mode A.
+- AR-4: **SPIKE-1** (gates ALL Mode B build, Epic 3) — prove the `Ciphertext.add → ElGamalNizk → nizk::verify_elgamal` round-trip. **PASS requires ALL:** (1) off-chain SDK verify true for correct X; (2) on-chain `verify_elgamal` success for the same proof; (3) wrong X → false (both paths); (4) tampered ciphertext → false; (5) measured & recorded client-side proof-gen time, proof size, on-chain verify gas. **#1 blocker = Fiat-Shamir transcript byte-parity** (wasm prover vs Move verifier): write an interop vector test first. Idempotent on-chain `pretest` fixture: devnet env active, funded address, `aperture` Move package published + id captured to `scripts/.published-devnet.json`, dlog-table-needed question resolved. Owner + due date + timebox required. On miss → FR-18 single-amount (if it passes) or recorded clip + live Mode A.
 - AR-5: **SPIKE-2** (shapes FR-5, gates FR-8) — can wrap + batch (+ event) compose in one PTB without a balance-update conflict? Fallback: split funding and payment into two txs (still satisfies FR-5). Low severity; runs in parallel with SPIKE-1.
 
 **Core architectural decisions (cross-cutting):**
@@ -175,7 +175,7 @@ The project stands up reproducibly; the UI spine (theme-token contract + `<Ciphe
 - **1.0 — UI Contract & Signature Cell** *(fixture-only; sequenced before crypto work)*: theme-token contract (amber/aqua/violet), `<CipherCell>` state machine (masked/revealing/revealed/error), role-switcher **shell** + "open on Mode B" front door, shared state primitives (skeleton/error/empty). No `apps/web` feature wired to real data here. *(UX-DR1–5, 8–11; FR-21 shell only)*
 - **1.1a** — vendor+pin Contra submodule + build `wasm` + `core/crypto`; narrow first-green (sdk excluded). *(AR-1/2/3)*
 - **1.1b** — Move build/test wiring + off-chain spike harness + **verify primitive & ProofAdapter verify-seam (off-chain)**. *(AR-6/13/14; FR-17 primitive)*
-- **1.1c** — on-chain fixture: localnet up, publish Move `nizk` package, capture package-id, fund address, resolve dlog-table question + on-chain verify seam. *(FR-20a init/seed; AR-4 prereqs)*
+- **1.1c** — on-chain fixture: devnet env active + funded address + publish Move `aperture` package + capture package-id to `scripts/.published-devnet.json` + resolve dlog-table question + on-chain verify seam (PTB calls `aperture::verifier::verify_aggregate`). *(FR-20a init/seed; AR-4 prereqs)*
 - **1.2 — SPIKE-1 go/no-go** *(gates Epic 3; DECISION-BY before Epic 2 closes)* + **SPIKE-2** (one-PTB wrap+batch) shaping FR-5. *(AR-4/5/11; NFR-3/6 measured here)*
 - **1.3–1.7** — data plane features: create org + add recipients (FR-1/2), register accounts (FR-3), fund via single aggregate wrap (FR-4), execute batch run (FR-5), Holder balance + claim/withdraw (FR-6/7).
 
@@ -211,7 +211,7 @@ Two-person team. **Tenny** — PM (owns this doc + prioritization) + **frontend*
 | 1.0 UI Contract & Signature Cell | **Tenny** | Tokens, atoms, CipherCell, shell, state primitives — fixture-only |
 | 1.1a Vendored Baseline & First-Green | **JJ** | vendor/pin, wasm, core/crypto, version assert · Tenny: prune kaisho web base |
 | 1.1b Move Build + Off-Chain Spike + Verify Seam | **JJ** | move, spike harness, verify seam, golden vectors |
-| 1.1c On-Chain Fixture & Verify Seam | **JJ** | localnet, publish Move pkg, fixture, on-chain verify |
+| 1.1c On-Chain Fixture & Verify Seam (devnet) | **JJ** | devnet env, pretest faucet, publish Move pkg, capture packageId, on-chain verify |
 | 1.2a SPIKE-1 Go/No-Go | **JJ** | aggregate proof round-trip, on/off-chain, measurements |
 | 1.2b SPIKE-2 One-PTB Wrap+Batch | **JJ** | PTB composition decision |
 | 1.3 Create Organization | **JJ** + Tenny | JJ: on-chain anchor + `POST /orgs` + store · Tenny: Payer create form |
@@ -321,15 +321,15 @@ So that SPIKE-1's on-chain assertion can run and the one-command deploy+seed gro
 
 **Acceptance Criteria:**
 
-**Given** a fresh environment, **When** the `pretest` fixture runs, **Then** a localnet validator is up, the Move package is published with its package-id written back to SDK config, an active address is funded, **And** the fixture is idempotent (re-runnable). *(AR-4)*
+**Given** a fresh environment, **When** the `pretest-devnet` fixture runs, **Then** the sui CLI is on the `devnet` env, the devnet RPC is reachable, the active address is funded (topped up via faucet if below 0.5 SUI), **And** the fixture is idempotent (re-runnable). *(AR-4)*
 
 **Given** the dlog-table question, **When** the fixture initializes, **Then** whether on-chain verify needs a dlog table (vs commitment-equality with X as public input) is resolved and documented. *(AR-4)*
 
-**Given** the on-chain verify seam, **When** a proof is submitted, **Then** `nizk::verify_elgamal` can be invoked on localnet and returns a result. *(FR-17 primitive, on-chain)*
+**Given** the on-chain verify seam, **When** the `publish-devnet` script runs, **Then** the `aperture` Move package is published to devnet with its package-id captured to `scripts/.published-devnet.json`, **And** `aperture::verifier::verify_aggregate` is invokable on devnet via a PTB and returns a result. *(FR-17 primitive, on-chain)*
 
 **Given** FR-20a, **When** seed runs, **Then** it creates the SQLite schema and is the basis for one-command deploy+seed; re-seed = delete file. *(AR-7, NFR-7)*
 
-**Given** the off/on-chain split, **Then** `it('verifies off-chain')` and `it('verifies on-chain')` are separate tests so a red result is unambiguous. *(AR-4)*
+**Given** the off/on-chain split, **Then** `it('verifies off-chain')` (in `packages/spike/`) and `it('verifies on-chain')` (in `packages/spike/test/onchain/`) are separate tests in separate vitest projects so a red result is unambiguous. The on-chain test uses `@mysten/sui` and is OUTSIDE the 1.1b spike import-discipline (which forbids `@mysten/*` in `packages/spike/src/`). *(AR-4)*
 
 ### Story 1.2a: SPIKE-1 Go/No-Go *(gates Epic 3)*
 
@@ -337,7 +337,7 @@ As a tech lead,
 I want SPIKE-1 to return an empirical go/no-go on the Mode B aggregate proof path,
 So that Epic 3 scope is decided with runway to pivot before Epic 2 closes.
 
-> **Runs early, in parallel with the foundation sub-phase** (start trigger = Story 1.1c fixture green; not blocked behind data-plane features). Its import surface is `@aperture/core(crypto)` + `@aperture/wasm` + the 1.1c localnet fixture.
+> **Runs early, in parallel with the foundation sub-phase** (start trigger = Story 1.1c fixture green; not blocked behind data-plane features). Its import surface is `@aperture/core(crypto)` + `@aperture/wasm` + the 1.1c devnet fixture. The on-chain half of SPIKE-1 lives in `packages/spike/test/onchain/` (separate vitest project, uses `@mysten/sui`); the 1.1b import discipline (no `@mysten/*` in `packages/spike/src/`) is preserved.
 
 **Acceptance Criteria (PASS requires ALL):**
 

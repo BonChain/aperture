@@ -1,17 +1,4 @@
 packages:
+  - 'packages/*'
+  - 'packages/spike/test/onchain'  # Story 1.1c on-chain test (uses @mysten/sui)
   - 'apps/*'
-
-# Native build steps required by the dev toolchain (esbuild/SWC ship platform
-# binaries via postinstall). Explicitly allowed so vite/vitest work.
-allowBuilds:
-  '@swc/core': true
-  esbuild: true
-
-onlyBuiltDependencies:
-  - '@swc/core'
-  - esbuild
-
-# Single Vite version across the tree (vitest would otherwise pull a second
-# major, whose plugin types clash with the vite@6 react-swc plugin).
-overrides:
-  vite: 6.4.3

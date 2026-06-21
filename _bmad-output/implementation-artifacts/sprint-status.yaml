@@ -1,5 +1,5 @@
 # generated: 2026-06-20
-# last_updated: 2026-06-20 (stories 1.0 + 1.1a created)
+# last_updated: 2026-06-20 (1.1b story file created; status backlog → ready-for-dev)
 # project: Aperture
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-06-20
-last_updated: 2026-06-20 (story 1.0 → done)
+last_updated: 2026-06-21 (story 1.0 → done; full spike1 code review complete → 1.1b + 1.1c + 1.2a all done; 14 patches applied)
 project: Aperture
 project_key: NOKEY
 tracking_system: file-system
@@ -45,10 +45,10 @@ development_status:
   # Epic 1: Foundation, Confidential Data Plane & Mode B Feasibility
   epic-1: in-progress
   1-0-ui-contract-signature-cell: done
-  1-1a-vendored-pinned-baseline-first-green-build: ready-for-dev
-  1-1b-move-package-build-off-chain-spike-harness-verify-seam: backlog
-  1-1c-on-chain-fixture-verify-seam: backlog
-  1-2a-spike-1-go-no-go: backlog
+  1-1a-vendored-pinned-baseline-first-green-build: done
+  1-1b-move-package-build-off-chain-spike-harness-verify-seam: done
+  1-1c-on-chain-fixture-verify-seam: done
+  1-2a-spike-1-go-no-go: done
   1-2b-spike-2-one-ptb-wrap-batch: backlog
   1-3-create-organization: backlog
   1-4-add-recipients-with-cap: backlog
@@ -68,8 +68,8 @@ development_status:
   2-5-privacy-posture-panel: backlog
   epic-2-retrospective: optional
 
-  # Epic 3: Proof-of-Figure (Mode B) — GATED on SPIKE-1 (Story 1.2a)
-  epic-3: backlog
+  # Epic 3: Proof-of-Figure (Mode B) — GATED on SPIKE-1 (Story 1.2a) ✓ GATE PASSED
+  epic-3: in-progress
   3-1-select-entries-disclose-value: backlog
   3-2-generate-aggregate-proof: backlog
   3-3-verify-proof-without-secret-key: backlog

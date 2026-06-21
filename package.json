@@ -1,14 +1,32 @@
 {
-	"name": "aperture",
-	"private": true,
-	"version": "0.0.0",
-	"description": "Aperture — disclosure layer for confidential payments on Sui (monorepo root)",
-	"type": "module",
-	"packageManager": "pnpm@11.8.0",
-	"scripts": {
-		"dev": "pnpm --filter web dev",
-		"build": "pnpm --filter web build",
-		"test": "pnpm --filter web test",
-		"lint": "pnpm --filter web lint"
-	}
+  "name": "aperture",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Aperture — confidential payment + disclosure UI on top of MystenLabs/confidential-transfers (Contra). See CONVENTIONS.md for Forked/Modified/Built-new ledger.",
+  "type": "module",
+  "packageManager": "pnpm@11.8.0",
+  "scripts": {
+    "preflight": "./scripts/preflight.sh",
+    "postinstall": "git submodule update --init --recursive && ./scripts/regen-pin.sh",
+    "build:wasm": "./scripts/build-wasm.sh",
+    "build:crypto": "pnpm --filter @aperture/core build:crypto",
+    "build:move": "bash -c 'command -v sui >/dev/null 2>&1 || { echo \"✗ sui CLI not in PATH — install from https://github.com/MystenLabs/sui/releases (or cargo install sui) and re-run\" >&2; exit 1; }; cd move && sui move build -e devnet'",
+    "build:first-green": "pnpm build:wasm && pnpm build:crypto && pnpm build:move",
+    "test": "pnpm --filter @aperture/core test && pnpm --filter @aperture/spike test && pnpm --filter @aperture/sdk test:adapter-version && pnpm test:move",
+    "test:adapter-version": "pnpm --filter @aperture/sdk test:adapter-version",
+    "test:move": "bash -c 'command -v sui >/dev/null 2>&1 || { echo \"✗ sui CLI not in PATH — install from https://github.com/MystenLabs/sui/releases (or cargo install sui) and re-run\" >&2; exit 1; }; cd move && sui move test -e devnet'",
+    "test:spike": "pnpm --filter @aperture/spike test",
+    "test:spike:onchain": "pnpm --filter @aperture/spike-onchain test",
+    "pretest:devnet": "./scripts/pretest-devnet.sh",
+    "publish:devnet": "./scripts/publish-devnet.sh",
+    "format:move": "prettier-move -w 'move/sources/**/*.move' 'move/tests/**/*.move'",
+    "format:move:check": "prettier-move -c 'move/sources/**/*.move' 'move/tests/**/*.move'",
+    "capture:golden": "./scripts/capture-move-golden.sh",
+    "verify:pin": "./scripts/verify-pin.sh"
+  },
+  "devDependencies": {
+    "tsx": "^4.22.4",
+    "typescript": "^5.9.0",
+    "vitest": "^4.1.0"
+  }
 }
