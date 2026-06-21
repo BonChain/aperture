@@ -15,7 +15,14 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { ristretto255 } from "@noble/curves/ed25519.js";
-import { blake2b } from "@noble/hashes/blake2.js";
+
+import {
+  bytesToHex,
+  fiatShamirChallenge,
+  hashToScalar,
+  RISTRETTO_N,
+  readScalarLE,
+} from "./_bcs.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fxDir = resolve(here, "../test/fixtures");
@@ -42,52 +49,6 @@ const TEST_AMOUNT = 42n;
 const TEST_BLINDING = 67890n;
 const TEST_SK = 12345n;
 
-function uleb128(n: number): Uint8Array {
-  const out: number[] = [];
-  let v = n;
-  do {
-    let b = v & 0x7f;
-    v >>>= 7;
-    if (v !== 0) b |= 0x80;
-    out.push(b);
-  } while (v !== 0);
-  return new Uint8Array(out);
-}
-
-function bcsEncodeVectorVectorU8(chunks: Uint8Array[]): Uint8Array {
-  const parts: Uint8Array[] = [];
-  parts.push(uleb128(chunks.length));
-  for (const c of chunks) {
-    parts.push(uleb128(c.length));
-    parts.push(c);
-  }
-  const total = parts.reduce((n, p) => n + p.length, 0);
-  const out = new Uint8Array(total);
-  let off = 0;
-  for (const p of parts) {
-    out.set(p, off);
-    off += p.length;
-  }
-  return out;
-}
-
-function fiatShamir(chunks: Uint8Array[]): bigint {
-  const preimage = bcsEncodeVectorVectorU8(chunks);
-  const hash = blake2b(preimage, { dkLen: 32 });
-  hash[31] = 0;
-  return ristretto255.Point.Fn.create(
-    hash.reduce((acc, b, i) => acc | (BigInt(b) << BigInt(i * 8)), 0n),
-  );
-}
-
-const RISTRETTO_N =
-  0x1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3edn;
-
-function readScalarLE(bytes: Uint8Array, off: number): bigint {
-  let v = 0n;
-  for (let i = 31; i >= 0; i--) v = (v << 8n) | BigInt(bytes[off + i] as number);
-  return v;
-}
 
 /** Isomorphic TS-side `verify_elgamal`. Mirrors `aperture::verifier::verify`. */
 function verifyElGamal(
@@ -112,7 +73,7 @@ function verifyElGamal(
   // on-chain seam contracts aligned.
   const z1c = z1 % RISTRETTO_N;
   const z2c = z2 % RISTRETTO_N;
-  const challenge = fiatShamir([
+  const challenge = hashToScalar(fiatShamirChallenge([
     dst,
     G.toBytes(),
     H.toBytes(),
@@ -121,7 +82,7 @@ function verifyElGamal(
     e2.toBytes(),
     a.toBytes(),
     b.toBytes(),
-  ]);
+  ]));
   // Clamp challenge to mod N too — same reason.
   const challengeN = challenge % RISTRETTO_N;
   const lhs1 = pk.multiply(z1c);
@@ -129,12 +90,6 @@ function verifyElGamal(
   const lhs2 = e1.multiply(challengeN).add(b);
   const rhs2 = G.multiply(z1c).add(H.multiply(z2c));
   return lhs1.equals(rhs1) && lhs2.equals(rhs2);
-}
-
-function bytesToHex(bytes: Uint8Array): string {
-  let out = "";
-  for (const b of bytes) out += b.toString(16).padStart(2, "0");
-  return out;
 }
 
 function buildCanonicalStatement(): {

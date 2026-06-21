@@ -56,7 +56,7 @@ function decodeUleb128(
       throw new Error("ULEB128 decode: truncated input");
     }
     const byte = bytes[i] as number;
-    value |= (byte & 0x7f) << shift;
+    value = (value | ((byte & 0x7f) << shift)) >>> 0; // >>> 0 keeps value unsigned 32-bit
     i += 1;
     if ((byte & 0x80) === 0) break;
     shift += 7;
@@ -108,16 +108,19 @@ export function deserializeStatement(bytes: Uint8Array): Statement {
 
   const [pkLen, pkLenBytes] = decodeUleb128(bytes, off);
   off += pkLenBytes;
+  if (pkLen !== 32) throw new Error(`deserializeStatement: pk must be 32 bytes (got ${pkLen})`);
   const pk = bytes.slice(off, off + pkLen);
   off += pkLen;
 
   const [ctLen, ctLenBytes] = decodeUleb128(bytes, off);
   off += ctLenBytes;
+  if (ctLen !== 32) throw new Error(`deserializeStatement: ciphertext must be 32 bytes (got ${ctLen})`);
   const ciphertext = bytes.slice(off, off + ctLen);
   off += ctLen;
 
   const [dhLen, dhLenBytes] = decodeUleb128(bytes, off);
   off += dhLenBytes;
+  if (dhLen !== 32) throw new Error(`deserializeStatement: decryptionHandle must be 32 bytes (got ${dhLen})`);
   const decryptionHandle = bytes.slice(off, off + dhLen);
   off += dhLen;
 

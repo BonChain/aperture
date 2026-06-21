@@ -39,6 +39,15 @@ const TEST_AMOUNT = 42n;
 const TEST_SK = 12345n;
 const TEST_BLINDING = 67890n;
 
+// Aggregate constants — match packages/spike/scripts/generate-aggregate-proof.ts
+// + packages/spike/src/spike1.aggregate.test.ts + aperture_tests.move.
+const AGG_SK = 12345n;
+const ENTRY_A_AMOUNT = 40000n;
+const ENTRY_A_BLINDING = 11111n;
+const ENTRY_B_AMOUNT = 30000n;
+const ENTRY_B_BLINDING = 22222n;
+const AGG_AMOUNT = ENTRY_A_AMOUNT + ENTRY_B_AMOUNT; // 70000 > 2^16
+
 // Move function signature for the on-chain seam:
 //   aperture::verifier::verify_aggregate(
 //     dst: vector<u8>,
@@ -47,7 +56,7 @@ const TEST_BLINDING = 67890n;
 //     decryption_handle: vector<u8>,
 //     amount: u64,
 //     proof_a: vector<u8>, proof_b: vector<u8>, proof_z1: vector<u8>, proof_z2: vector<u8>
-//   ): bool
+//   ): void  // aborts with E_VERIFY_FAILED (code 100) on false — never returns
 function buildVerifyTx(
   packageId: string,
   statement: { dst: Uint8Array; pk: Uint8Array; ciphertext: Uint8Array; decryptionHandle: Uint8Array },
@@ -114,6 +123,13 @@ function readActiveKeypair(): { keypair: Ed25519Keypair; address: string } {
         "The sui keystore format may have changed; check `sui keytool list`.",
     );
   }
+  if (rawBytes[0] !== 0x00) {
+    throw new Error(
+      `unexpected key type flag ${rawBytes[0]} (expected 0x00 for Ed25519). ` +
+        "Active address uses a non-Ed25519 key (Secp256k1=0x01, Secp256r1=0x02). " +
+        "Run `sui client switch --address <ed25519-address>` and re-run pretest:devnet.",
+    );
+  }
   const secretBytes = rawBytes.slice(1);
   const keypair = Ed25519Keypair.fromSecretKey(secretBytes);
   return { keypair, address: keypair.getPublicKey().toSuiAddress() };
@@ -138,6 +154,29 @@ async function buildCanonicalStatement() {
     pk: pk.toBytes(),
     ciphertext: c1.toBytes(),
     decryptionHandle: dh.toBytes(),
+  };
+}
+
+// Build the AGGREGATE statement by encrypting two entries and summing the
+// ciphertexts with `Ciphertext.add` (component-wise Ristretto addition) — the
+// same construction as packages/spike/src/spike1.aggregate.test.ts. This is
+// the on-chain half of the SPIKE-1 aggregate addendum (2026-06-21).
+async function buildAggregateStatement() {
+  const { ristretto255 } = await import("@noble/curves/ed25519.js");
+  const G = ristretto255.Point.BASE;
+  const H = ristretto255.Point.fromHex(
+    "34ce1477c14558178089500a39c864e0f607b3c1f41ab398400e4a9de6d2c446",
+  );
+  const pk = G.multiply(AGG_SK);
+  const c1A = G.multiply(ENTRY_A_BLINDING).add(H.multiply(ENTRY_A_AMOUNT));
+  const dhA = pk.multiply(ENTRY_A_BLINDING);
+  const c1B = G.multiply(ENTRY_B_BLINDING).add(H.multiply(ENTRY_B_AMOUNT));
+  const dhB = pk.multiply(ENTRY_B_BLINDING);
+  return {
+    dst: new Uint8Array(0),
+    pk: pk.toBytes(),
+    ciphertext: c1A.add(c1B).toBytes(), // Ciphertext.add
+    decryptionHandle: dhA.add(dhB).toBytes(), // Ciphertext.add
   };
 }
 
@@ -223,7 +262,48 @@ describe("onchain.devnet (aperture::verifier::verify_aggregate on devnet)", () =
         signer: keypair,
         include: { effects: true },
       }),
-    ).rejects.toThrow(/abort code: 100|verify_aggregate/);
+    ).rejects.toThrow(/abort code: 100/);
+  }, 60_000);
+
+  it("verifies an AGGREGATE proof (2 entries, sum > 2^16) on devnet (success → true)", async () => {
+    if (skipReason) throw new Error(skipReason);
+    const statement = await buildAggregateStatement();
+    const proof = loadHex("proofAggregateValid.hex");
+    const tx = buildVerifyTx(packageId, statement, proof, AGG_AMOUNT);
+    tx.setSender(activeAddress);
+    const result = await client.signAndExecuteTransaction({
+      transaction: tx,
+      signer: keypair,
+      include: { effects: true },
+    });
+    const finalized = await client.waitForTransaction({
+      digest: result.digest,
+      options: { showEffects: true },
+    });
+    const status = finalized.effects?.status;
+    if (status && typeof status === "object" && "status" in status) {
+      expect(status.status, "tx status for valid aggregate proof should be 'success'").toBe("success");
+    } else {
+      throw new Error(
+        `unexpected effects.status: ${JSON.stringify(status)}. ` +
+          "Most likely: stale packageId → re-run `pnpm pretest:devnet && pnpm publish:devnet`.",
+      );
+    }
+  }, 60_000);
+
+  it("rejects a tampered AGGREGATE proof on devnet (abort → false)", async () => {
+    if (skipReason) throw new Error(skipReason);
+    const statement = await buildAggregateStatement();
+    const proof = loadHex("proofAggregateTampered.hex");
+    const tx = buildVerifyTx(packageId, statement, proof, AGG_AMOUNT);
+    tx.setSender(activeAddress);
+    await expect(
+      client.signAndExecuteTransaction({
+        transaction: tx,
+        signer: keypair,
+        include: { effects: true },
+      }),
+    ).rejects.toThrow(/abort code: 100/);
   }, 60_000);
 
   it("stale packageId guard — fails loud with re-run instructions", async () => {

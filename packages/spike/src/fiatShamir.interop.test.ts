@@ -30,8 +30,14 @@
 // package is built (1.1c or later).
 
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { bytesToHex, fiatShamirChallenge, hashToScalar } from "./_bcs.js";
+
+const here = dirname(fileURLToPath(import.meta.url));
+const fxDir = resolve(here, "../test/fixtures");
 
 describe("Fiat-Shamir interop vector (architecture #1 blocker)", () => {
   it("matches Move's `fiat_shamir_challenge_regression` byte-for-byte", () => {
@@ -47,6 +53,10 @@ describe("Fiat-Shamir interop vector (architecture #1 blocker)", () => {
     const expected =
       "af00c4976049ed81805c76d3c5ba7cfaeb1550e44f5978cffb12b285a5e25a00";
     expect(bytesToHex(challenge)).toBe(expected);
+    // Also assert the committed fixture file matches — catches silent drift if
+    // the file is regenerated with a different algorithm while the inline
+    // expected string is left unchanged.
+    expect(readFileSync(resolve(fxDir, "fiatShamirBlake2b256.hex"), "utf8").trim()).toBe(expected);
   });
 
   it("the cleared top byte is part of the output, not the input", () => {

@@ -5,7 +5,7 @@ story_track: 1-1b
 
 # Story 1.1b: Move Package Build & Off-Chain Spike Harness + Verify Seam
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -304,3 +304,59 @@ minimax-coding-plan/MiniMax-M3 (opencode, WSL2 Ubuntu 26.04, Node 22.23.0, pnpm 
 ### Change Log
 
 - **2026-06-20** — Story 1.1b implemented by JJ (with opencode + MiniMax-M3). Created Move sources (`statement.move` + `verifier.move`), 3 Move tests, `capture-move-golden.sh`, `statementCodec.ts` + 5 cross-check tests, `ProofAdapter` interface + fake impl + 4 tests, `packages/spike/` (3 fixture files + 2 generator scripts + 2 sentinel stubs + 2 test files), GitHub Actions CI, root script wiring, and addressed deferred `timingSafeEqual` length-leak from 1.1a review. **All 33 tests pass (18 core + 7 spike + 5 sdk + 3 move).** Pin verified across all 3 tracked locations. Move formatting clean via prettier-move. Architecture #1 blocker (Fiat-Shamir interop) unblocked — TS Blake2b256 matches Move byte-for-byte. Status → review.
+
+### Review Findings
+
+_Code review of Group A (Move sources + core crypto + proof adapter) on 2026-06-21. 3-layer parallel review: Blind Hunter, Edge Case Hunter, Acceptance Auditor._
+
+#### Decision-Needed
+
+- [x] [Review][Decision] **D1 — fakeProofAdapter `ciphertext` field semantic mismatch** ✅ fixed — `fakeProofAdapter.generateProof` returns `VALID_PROOF.slice(0, 96)` as the `ciphertext` field of `GenerateProofOutput`. The `ProofAdapter` contract specifies this field as "pk ‖ ciphertext ‖ decryption_handle (96 bytes)" (a Statement-side value). `proofValid.hex` is laid out as `a ‖ b ‖ z1 ‖ z2` (proof fields), so bytes 0–95 are `a ‖ b ‖ z1[:32]` — wrong semantics. The code comment calls this a placeholder. Decision: (a) fix the fake to return the Statement's actual ciphertext bytes from `input.statement`, or (b) explicitly document the placeholder violation with a TODO + assert 96 bytes so Story 3.3 consumers are warned. [`packages/core/src/proof/fakeProofAdapter.ts:44`]
+
+- [x] [Review][Decision] **D2 — `timingSafeEqual` implementation contradicts story spec** ✅ fixed — Story 1.1b Task 9 specifies "XOR `a.length ^ b.length` into the accumulator + XOR-and-OR loop over `Math.max(a.length, b.length)` bytes." The delivered code does `if (a.length !== b.length) return false; loop over a.length`. The code comment argues the Max approach is "strictly worse" (continuous length side-channel) and the early-return is "no worse than 1.1a." The spec text has not been updated to match. Decision: (a) update the story spec to retire the Max approach and formally accept the current implementation, or (b) implement the specified XOR-length approach and update the comment. [`packages/core/src/crypto/index.ts:679-685`]
+
+#### Patch
+
+- [x] [Review][Patch] **P1 [HIGH] — ULEB128 `decodeUleb128` 32-bit signed integer overflow** ✅ fixed — `value |= (byte & 0x7f) << shift` at shift=28 with a high nibble set (byte & 0x7f >= 0x08) sets bit 31, making `value` a negative signed 32-bit integer due to JS bitwise coercion. Result: `bytes.slice(off, off + negativeValue)` returns an empty slice; `off` advances by zero; the parse silently produces garbage field values without throwing. Fix: apply `value = value >>> 0` after each `|=` to unsigned-coerce, or accumulate in `BigInt`. [`packages/core/src/crypto/statementCodec.ts:59`]
+
+- [x] [Review][Patch] **P2 [MEDIUM] — `deserializeStatement` accepts pk/ciphertext/decryptionHandle of any length** ✅ fixed — After decoding ULEB128 length prefixes, the codec does not validate that `pkLen === 32`, `ctLen === 32`, or `dhLen === 32`. A malformed blob with a 0-byte pk passes the codec and produces a `Statement` that silently fails downstream at Ristretto point decode. Fix: add length assertions after each field decode. [`packages/core/src/crypto/statementCodec.ts:109-122`]
+
+- [x] [Review][Patch] **P3 [MEDIUM] — `statementCodec.test.ts` round-trip test is insufficient for AC2** ✅ fixed — The golden-vector test does `deserialize(goldenBytes) → re-serialize → compare`. This proves the codec is self-consistent with the fixture but not that `serializeStatement` is correct given known inputs. A symmetric encode/decode bug passes this test. AC2 requires an independent forward assertion: construct a `Statement` from the TEST_SK/TEST_BLINDING/TEST_AMOUNT constants used in `aperture_tests::build_test_statement`, serialize it, and compare directly against `goldenBytes`. [`packages/core/src/crypto/statementCodec.test.ts:90-97`]
+
+- [x] [Review][Patch] **P4 [LOW] — `makeSessionKey` stores bytes by reference — caller can mutate key after construction** ✅ fixed — `Object.freeze` is shallow; it freezes the object's own properties but not the `Uint8Array` pointed to by `bytes`. The caller's original buffer writes through. Fix: store `bytes.slice()` (a copy) inside the frozen object. [`packages/core/src/proof/proofAdapter.ts:37-43`]
+
+#### Deferred
+
+- [x] [Review][Defer] `fakeProofAdapter.ts` imports `node:fs` — potential D1 isomorphic violation for packages/core [`packages/core/src/proof/fakeProofAdapter.ts:1-3`] — deferred; fake is explicitly temporary, real impl (post-SPIKE-1) must be isomorphic
+- [x] [Review][Defer] `SessionKey.bytes` is publicly readable — by design; hiding bytes would prevent the adapter from using the key
+- [x] [Review][Defer] `SessionKey` runtime brand doesn't prevent structural forgery — TypeScript limitation, accepted
+- [x] [Review][Defer] `prove_for_testing` uses hardcoded nonces (r1=1234, r2=5678) — `#[test_only]` context, test constants only; no real keys passed
+- [x] [Review][Defer] `fakeProofAdapter` `readFileSync` breaks outside monorepo — intentional limitation of the spike-layer fake
+- [x] [Review][Defer] No Move test for non-empty `dst` in `verify_elgamal_round_trip` — low-priority coverage gap
+- [x] [Review][Defer] No Move test for `amount=0` (identity-point ciphertext component) — low-priority coverage gap
+- [x] [Review][Defer] `timingSafeEqual` comment "strictly worse" claim is mildly inaccurate — secondary to D2 resolution
+- [x] [Review][Defer] `serializeStatement` has no input validation on field lengths — acceptable at encode time; callers own their inputs
+
+---
+
+_Code review of Group B (spike harness: `packages/spike/src/`, `_bcs.ts`, scripts, FORBIDDEN stubs, fixtures) on 2026-06-21. 3-layer parallel review: Blind Hunter, Edge Case Hunter, Acceptance Auditor._
+
+#### Dismissed
+
+- R1 — `proofValid.hex` appeared 127 bytes in diff — display artifact; actual file is 128 bytes (256 hex chars). Confirmed by `wc`.
+- R2 — Local `fiatShamir()` uses `ristretto255.Point.Fn.create()` instead of explicit `% RISTRETTO_N` — moot after P1 fix (local copy removed).
+
+#### Patch
+
+- [x] [Review][Patch] **P1 [HIGH] — `spike1.elgamal.test.ts` re-implements `uleb128`, `bcsEncodeVectorVectorU8`, `fiatShamir`, `RISTRETTO_N`, `readScalarLE`, and `bytesToHex` locally** ✅ fixed — `_bcs.ts` line 8 explicitly forbids this ("All consumers MUST import from here; do not re-roll `uleb128` or `bcsEncodeVectorVectorU8` per-file — drift risk between Move and TS"). The local copy used `Fn.create()` (internal noble API) instead of explicit `% RISTRETTO_N` and returned `bigint` from a different call path. Fix: replaced all local definitions with `import { bytesToHex, fiatShamirChallenge, hashToScalar, RISTRETTO_N, readScalarLE } from "./_bcs.js"` and updated call site to `hashToScalar(fiatShamirChallenge([...]))`. [`packages/spike/src/spike1.elgamal.test.ts:17-90,115,134-138`]
+
+- [x] [Review][Patch] **P2 [MEDIUM] — `test/fixtures/README.md` describes wrong tamper for `proofTampered.hex`** ✅ fixed — README said "byte 31 XORed by `0x80` (the Ristretto sign bit)". Actual generator does `tampered[64] ^= 0x01` (low bit of z1's first byte — a scalar tamper). The README was a stale copy from an earlier design (Ristretto point sign-bit tamper). Fixed to: "byte 64 (first byte of scalar `z1`) XORed by `0x01` (low bit flip)... Tampers a SCALAR byte, not a Ristretto point byte, so `g_from_bytes` does not abort before the relation check." [`packages/spike/test/fixtures/README.md:15`]
+
+- [x] [Review][Patch] **P3 [LOW] — `fiatShamirBlake2b256.hex` committed but never loaded by the interop test** ✅ fixed — `fiatShamir.interop.test.ts` hardcoded the expected hash inline but never read the committed `.hex` file; if the file drifted (regenerated with a different algorithm), the test still passed against the stale inline value. Fix: added `readFileSync(fxDir + "/fiatShamirBlake2b256.hex").trim() === expected` assertion immediately after the inline `bytesToHex(challenge) === expected` check. [`packages/spike/src/fiatShamir.interop.test.ts:49`]
+
+#### Deferred
+
+- [x] [Review][Defer] Import discipline test (`spike1.elgamal.test.ts:201-210`) checks config object text, not live import resolution — functional since FORBIDDEN stubs throw at module eval; a sound fix would do `await expect(import("apps/api")).rejects.toThrow("Forbidden")` instead. Low priority since the actual guard (stub throws) is real.
+- [x] [Review][Defer] `bcsEncodeVectorVectorU8` has no tests for empty outer `[]` or empty inner `[[]]` — both would produce correct BCS output but are untested. Low-priority coverage gap.
+- [x] [Review][Defer] `generate-fiat-shamir-fixture.ts` validates 2-chunk case only (`n=2`), not the 8-chunk ElGamal transcript — chunk counts and lengths are small here so ULEB128 does not go multi-byte; low-priority coverage gap.
+- [x] [Review][Defer] `tsconfig.json` excludes `scripts/` — `generate-golden-proofs.ts` and `generate-fiat-shamir-fixture.ts` are not type-checked at build time. Low risk since fixtures are committed outputs, but a type error in a script would only surface at `tsx` runtime.

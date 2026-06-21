@@ -58,30 +58,20 @@ export function hexToBytes(hex: string): Uint8Array {
   return out;
 }
 
-/** Constant-time equality on equal-length Uint8Arrays.
+/** Constant-time equality for byte buffers of potentially unequal length.
  *
- * Length-leak fix (Story 1.1b, carry-over from 1.1a review —
- * `_bmad-output/implementation-artifacts/deferred-work.md`):
- * the previous implementation returned `false` immediately on length
- * mismatch, leaking the discrete boolean `a.length !== b.length`. The
- * original 1.1b implementation iterated `Math.max(a.length, b.length)`
- * times — which is strictly worse (continuous side-channel on the
- * longer input's length). This version:
- *   1. Pre-checks `a.length === b.length` and returns `false` immediately
- *      on mismatch. This leaks the same boolean the original 1.1a code
- *      leaked — no worse than before.
- *   2. On equal lengths, runs an XOR-and-OR loop over exactly
- *      `a.length` bytes with **no** early termination — constant-time
- *      relative to the input length.
- *
- * Callers that need strict equal-length semantics (and want to avoid the
- * boolean leak on length mismatch) should pre-check `a.length === b.length`
- * themselves before calling this function. */
+ * XORs `a.length ^ b.length` into the accumulator first, then XOR-and-OR
+ * over `Math.max(a.length, b.length)` bytes with no early termination.
+ * Out-of-bounds reads on the shorter buffer return 0 (explicit guard below).
+ * This means unequal-length inputs always return `false`, and the loop runs
+ * the same number of iterations regardless of where bytes differ. */
 export function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) {
-    diff |= (a[i] as number) ^ (b[i] as number);
+  let diff = a.length ^ b.length;
+  const len = Math.max(a.length, b.length);
+  for (let i = 0; i < len; i++) {
+    const ai = i < a.length ? (a[i] as number) : 0;
+    const bi = i < b.length ? (b[i] as number) : 0;
+    diff |= ai ^ bi;
   }
   return diff === 0;
 }

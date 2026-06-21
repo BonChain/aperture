@@ -124,6 +124,31 @@ pnpm test:spike:onchain    # 4 tests on devnet (valid=true, tampered=false, stal
 - **Pre-test on devnet reset:** the devnet faucet rate-limits ~1/day/address; on a reset, the user may need to wait hours or use a different address. Not automatable. Documented in `pretest-devnet.sh` exit code 14.
 - **Move.lock regen policy:** `pnpm build:move` will rewrite the lockfile if the framework rev changes. This is expected Move behavior. The historical pin in `Move.toml` stays; the lockfile's framework rev tracks the live devnet. Re-pin policy in `CONVENTIONS.md`.
 
+## Review Findings
+
+_Code review of Group C (`packages/spike/test/onchain/onchain.devnet.test.ts`) on 2026-06-21. 3-layer parallel review: Blind Hunter, Edge Case Hunter, Acceptance Auditor._
+
+#### Dismissed
+
+- R1 — BH-1 (BLOCKER false positive): `verify_aggregate` is void and uses `assert!` / abort semantics — `effects.status === "success"` IS the correct assertion. A void Move function that aborts on false is correctly tested via transaction failure, not `returnValues`. Dismissed.
+- R2 — BH-3 (HIGH false positive): empty `dst` in `buildCanonicalStatement` matches the canonical test triple used in all off-chain tests (`spike1.elgamal.test.ts`, `spike1.aggregate.test.ts`). Proofs were generated with `dst = new Uint8Array(0)`. Consistent. Dismissed.
+
+#### Patch
+
+- [x] [Review][Patch] **P1 [MEDIUM] — `readActiveKeypair` does not validate Ed25519 flag byte** ✅ fixed — Length check (`rawBytes.length !== 33`) passes for Secp256k1 (flag=0x01, 33 bytes) and Secp256r1 (flag=0x02, 33 bytes). A non-Ed25519 active address would silently pass length check, hand raw bytes to `Ed25519Keypair.fromSecretKey`, produce a wrong keypair with a different Sui address, and cause a signature-mismatch error on the PTB — misleading as a proof failure. Fix: added `rawBytes[0] !== 0x00` check with actionable message. [`packages/spike/test/onchain/onchain.devnet.test.ts:120-125`]
+
+- [x] [Review][Patch] **P2 [LOW] — Abort regex `/abort code: 100|verify_aggregate/` has operator precedence issue** ✅ fixed — JavaScript regex `|` alternates at lowest precedence, so this is `/(abort code: 100)|(verify_aggregate)/`. The second branch matches any error containing "verify_aggregate" — including wrong abort codes or wrong module paths. Fixed to `/abort code: 100/` (specific). [`packages/spike/test/onchain/onchain.devnet.test.ts:258,299`]
+
+- [x] [Review][Patch] **P3 [LOW] — JSDoc comment claims `verify_aggregate` returns `bool`** ✅ fixed — Line 59 said `): bool`. The Move function is `void` and aborts with `E_VERIFY_FAILED` (code 100) on failure — never returns. Fixed to `): void  // aborts with E_VERIFY_FAILED (code 100) on false — never returns`. [`packages/spike/test/onchain/onchain.devnet.test.ts:59`]
+
+#### Deferred
+
+- [x] [Review][Defer] `include: { effects: true }` in `signAndExecuteTransaction` is dead code (wrong option name for the SDK; the actual effects come from `waitForTransaction`) — no functional impact since both tests use `waitForTransaction` correctly; dead code only.
+- [x] [Review][Defer] `@noble/curves` is used in `buildCanonicalStatement` but not declared in `packages/spike/test/onchain/package.json` — resolves transitively via `@aperture/spike`'s dep today; could break under pnpm dedupe. Add `@noble/curves` to the onchain package's deps when refactoring.
+- [x] [Review][Defer] `loadHex` integer-division truncation on odd-length hex strings — committed fixtures are 256-hex-char (128 bytes); production risk is low. Add `if (text.length % 2 !== 0)` guard when the `_bcs.ts::hexToBytes` (which validates this) is available to the onchain package.
+- [x] [Review][Defer] No gas balance check in `beforeAll` — an empty-wallet failure produces an opaque SDK error; add `client.getBalance()` pre-flight if the "InsufficientGas" error appears ambiguous during SPIKE-1 manual runs.
+- [x] [Review][Defer] No length assertion on proof before slicing into 32-byte chunks — committed fixtures are 128 bytes; add `if (proof.length !== 128) throw` in `loadHex` or at call site when formalizing for production.
+
 ## Change Log
 
 - **2026-06-20** — Story 1.1c implementation started. Toolchain + devnet env wired, Move build green against devnet, Move.lock regenerated, `pretest-devnet.sh` + `publish-devnet.sh` created, `aperture::verifier::verify_aggregate` added, `@aperture/spike-onchain` test package created with 4 tests. All plan docs updated. SPIKE-1 (Story 1.2a) ready to run — execute `pnpm pretest:devnet && pnpm publish:devnet && pnpm test:spike:onchain` to close the on-chain half of the gate.

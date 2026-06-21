@@ -35,7 +35,7 @@ export function makeSessionKey(bytes: Uint8Array): SessionKey {
   // JSON.stringify / devtools / etc. Defined as a method on the literal so
   // the object remains frozen (defineProperty on frozen objects throws).
   const sk = Object.freeze({
-    bytes,
+    bytes: bytes.slice(), // copy — Object.freeze is shallow; original buffer remains mutable
     toJSON() {
       throw new Error("SessionKey.toJSON is forbidden — secrets must never be serialized");
     },

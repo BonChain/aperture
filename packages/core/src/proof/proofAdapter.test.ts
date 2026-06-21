@@ -49,17 +49,16 @@ describe("ProofAdapter (interface + fake)", () => {
       },
       sessionKey: sk,
     });
-    // Hard byte-equality against the committed fixture. Any drift
-    // (size, content) fails CI — Story 1.1b code review's BLOCKER #B2
-    // mitigation.
+    // proof: hard byte-equality against the committed fixture.
     expect(out.proof).toBeInstanceOf(Uint8Array);
     expect(out.proof.length).toBe(128);
     expect(Array.from(out.proof)).toEqual(Array.from(committedValidProof));
-    // `ciphertext` field per `proofAdapter.ts` docstring is the
-    // pk ‖ ct ‖ dh triple (96 bytes for twisted ElGamal). The fake
-    // returns the first 96 bytes of the committed proof for now
-    // (placeholder until the real adapter lands in 1.2a).
+    // ciphertext: must be pk ‖ ciphertext ‖ decryptionHandle from the input
+    // Statement (96 bytes), NOT proof bytes.
     expect(out.ciphertext.length).toBe(96);
+    expect(Array.from(out.ciphertext.slice(0, 32))).toEqual(Array.from(new Uint8Array(32)));
+    expect(Array.from(out.ciphertext.slice(32, 64))).toEqual(Array.from(new Uint8Array(32)));
+    expect(Array.from(out.ciphertext.slice(64, 96))).toEqual(Array.from(new Uint8Array(32)));
   });
 
   it("fakeProofAdapter.auditorDecrypt returns the deterministic plaintext", async () => {

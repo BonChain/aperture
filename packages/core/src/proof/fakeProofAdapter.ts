@@ -53,17 +53,16 @@ const VALID_PROOF: Uint8Array = (() => {
 const FAKE_PLAINTEXT = 42n;
 
 export const fakeProofAdapter: ProofAdapter = {
-  async generateProof(_input: GenerateProofInput): Promise<GenerateProofOutput> {
-    // NOTE: ignores the input shape — returns the committed valid proof.
-    // Once the real adapter lands, drop this and pass through the witness.
-    return {
-      proof: VALID_PROOF,
-      // `ciphertext` field per `proofAdapter.ts` docstring is the pk‖ct‖dh
-      // triple (96 bytes for twisted ElGamal). The fake returns the same
-      // fixture bytes for now (consumers parse this in 1.2a when real
-      // encryption lands); size asserted above.
-      ciphertext: VALID_PROOF.slice(0, 96),
-    };
+  async generateProof(input: GenerateProofInput): Promise<GenerateProofOutput> {
+    // Returns the committed valid proof; ignores the witness (no real proving).
+    // `ciphertext` is pk ‖ ciphertext ‖ decryptionHandle from the Statement —
+    // the 96-byte triple an auditor needs to decrypt, per the ProofAdapter contract.
+    const { pk, ciphertext: ct, decryptionHandle: dh } = input.statement;
+    const ciphertext = new Uint8Array(96);
+    ciphertext.set(pk, 0);
+    ciphertext.set(ct, 32);
+    ciphertext.set(dh, 64);
+    return { proof: VALID_PROOF, ciphertext };
   },
   async auditorDecrypt(_input: AuditorDecryptInput): Promise<AuditorDecryptOutput> {
     return FAKE_PLAINTEXT;
